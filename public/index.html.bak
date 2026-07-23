@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>miroir — carnet d'engagements</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f11;--surface:#18181c;--surface2:#1f1f24;--border:#2a2826;--ink:#e8e4da;--ink-dim:#6b685e;--ink-muted:#49473f;--accent:#c49a6c;--accent-dim:#5a4530;--danger:#8a4a3e;--radius:6px;--font-serif:'Georgia','Times New Roman',serif;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+html{font-size:16px}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.6;padding:2rem 1rem}
+@media(min-width:640px){body{padding:3rem 2rem}}
+h1{font-family:var(--font-serif);font-size:1.6rem;font-weight:400;letter-spacing:.02em}
+h1 span{color:var(--accent)}
+.container{max-width:520px;margin:0 auto}
+header{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+header .subtitle{font-size:.75rem;color:var(--ink-muted);font-style:italic}
+.empty-state{text-align:center;padding:4rem 1rem}
+.empty-state .symbol{font-family:var(--font-serif);font-size:3rem;color:var(--ink-muted);margin-bottom:1rem;opacity:.4}
+.empty-state p{color:var(--ink-dim);max-width:320px;margin:0 auto 1.5rem}
+.goal-form{margin-bottom:2.5rem}
+.goal-form label{display:block;font-family:var(--font-serif);font-size:1rem;color:var(--ink-dim);margin-bottom:.75rem}
+.goal-form .input-row{display:flex;gap:.5rem}
+.goal-form input[type="text"]{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;font-size:1rem;font-family:var(--font-sans);color:var(--ink);outline:none;transition:border-color .25s}
+.goal-form input[type="text"]:focus{border-color:var(--accent-dim)}
+.goal-form input::placeholder{color:var(--ink-muted);font-style:italic}
+.goal-form button{background:var(--accent-dim);color:var(--ink);border:none;border-radius:var(--radius);padding:.85rem 1.25rem;font-size:.9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
+.goal-form button:hover{background:var(--accent)}
+.identity-reveal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;animation:fadeSlide .5s ease;display:none}
+.identity-reveal .original{font-size:.8rem;color:var(--ink-muted);margin-bottom:.75rem}
+.identity-reveal .original strike{opacity:.5}
+.identity-reveal .identity{font-family:var(--font-serif);font-size:1.35rem;line-height:1.5;color:var(--accent);font-style:italic;margin-bottom:1.25rem}
+.identity-reveal .actions{display:flex;gap:.5rem}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink-dim);border-radius:var(--radius);padding:.5rem 1rem;font-size:.8rem;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--accent-dim);color:var(--accent)}
+.btn-primary{background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius);padding:.5rem 1rem;font-size:.8rem;cursor:pointer;transition:opacity .2s}
+.btn-primary:hover{opacity:.85}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.25rem 1rem;margin-bottom:1rem;position:relative;transition:border-color .3s}
+.goal-card .identity-line{font-family:var(--font-serif);font-size:1.1rem;line-height:1.5;color:var(--ink);margin-bottom:.35rem;cursor:pointer}
+.goal-card .identity-line:hover{color:var(--accent)}
+.goal-card .meta{display:flex;align-items:center;justify-content:space-between;margin-top:.5rem}
+.goal-card .meta-left{display:flex;align-items:center;gap:.5rem}
+.goal-card .original-toggle{font-size:.7rem;color:var(--ink-muted);cursor:pointer;border:none;background:none;text-decoration:underline dotted;opacity:.5;transition:opacity .2s}
+.goal-card .original-toggle:hover{opacity:1}
+.goal-card .original-text{display:none;font-size:.75rem;color:var(--ink-muted);margin-top:.25rem;padding:.25rem .5rem;background:var(--surface2);border-radius:4px}
+.goal-card .original-text.visible{display:block}
+.goal-card .days-since{font-size:.7rem;color:var(--ink-muted)}
+.days-since .fresh{color:var(--ink-muted)}
+.days-since .stale{color:var(--danger)}
+.days-since .warm{color:var(--accent-dim)}
+.goal-card .log-btn{background:transparent;border:1px solid var(--border);color:var(--ink-dim);border-radius:var(--radius);padding:.35rem .75rem;font-size:.75rem;cursor:pointer;transition:all .2s}
+.goal-card .log-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:rgba(196,154,108,.08)}
+.goal-card .delete-btn{background:none;border:none;color:var(--ink-muted);font-size:.85rem;cursor:pointer;opacity:.3;position:absolute;top:.5rem;right:.65rem;transition:opacity .2s}
+.goal-card .delete-btn:hover{opacity:1;color:var(--danger)}
+.goal-card .bottom-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
+.sparkline-row{display:flex;align-items:center;gap:.5rem;height:22px}
+.sparkline-row svg{flex-shrink:0}
+.trend-label{font-size:.65rem;color:var(--ink-muted);opacity:.6;white-space:nowrap}
+.trend-label.declining{color:var(--accent-dim);opacity:.8}
+.trend-label.critical{color:var(--danger);opacity:.9}
+.goal-card.trend-mild{border-left:2px solid var(--accent-dim)}
+.goal-card.trend-moderate{border-left:2px solid #b8863a}
+.goal-card.trend-critical{border-left:2px solid var(--danger)}
+.obstacle-info{font-size:.65rem;color:var(--ink-muted);cursor:pointer;display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .35rem;border-radius:8px;border:1px solid transparent;transition:all .2s}
+.obstacle-info:hover{border-color:var(--accent-dim);color:var(--accent)}
+.obstacle-info .top-cause{color:var(--accent-dim)}
+.recalibrate-btn{font-size:.65rem;color:var(--ink-muted);cursor:pointer;background:none;border:1px solid var(--border);border-radius:8px;padding:.1rem .4rem;transition:all .2s}
+.recalibrate-btn:hover{border-color:var(--accent-dim);color:var(--accent)}
+.intervention{background:linear-gradient(135deg,rgba(90,69,48,.25),rgba(24,24,28,.95));border:1px solid var(--accent-dim);border-left:3px solid var(--accent);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;animation:fadeSlide .4s ease}
+.intervention .question{font-family:var(--font-serif);font-size:.95rem;font-style:italic;color:var(--accent);margin-bottom:.75rem}
+.intervention .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.intervention .actions button{background:transparent;border:1px solid var(--accent-dim);color:var(--ink-dim);border-radius:var(--radius);padding:.4rem .8rem;font-size:.75rem;cursor:pointer;transition:all .2s}
+.intervention .actions button:hover{border-color:var(--accent);color:var(--accent)}
+.intervention .dismiss{background:none;border:none;color:var(--ink-muted);font-size:.7rem;cursor:pointer;text-decoration:underline dotted;margin-left:auto;padding:.4rem .5rem;opacity:.5}
+.intervention .dismiss:hover{opacity:1}
+.toast-container{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:100;pointer-events:none}
+.toast{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:.85rem 1.25rem;font-family:var(--font-serif);font-size:.9rem;font-style:italic;color:var(--accent);animation:fadeSlide .4s ease,fadeOut .4s ease 4s forwards;pointer-events:auto;max-width:420px}
+.obstacle-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+.obstacle-modal.open{display:flex}
+.obstacle-modal .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:400px;width:100%;padding:1.5rem;animation:fadeSlide .3s ease;max-height:90vh;overflow-y:auto}
+.obstacle-modal .panel h3{font-family:var(--font-serif);font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:.5rem}
+.obstacle-modal .panel > p{font-size:.8rem;color:var(--ink-dim);margin-bottom:1rem}
+.obstacle-option{display:block;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem .85rem;margin-bottom:.4rem;font-size:.85rem;color:var(--ink);cursor:pointer;transition:all .15s}
+.obstacle-option:hover{border-color:var(--accent-dim);background:rgba(196,154,108,.08);color:var(--accent)}
+.obstacle-option.selected{border-color:var(--accent);background:rgba(196,154,108,.12)}
+.obstacle-modal .panel .actions{display:flex;gap:.5rem;margin-top:.75rem}
+.obstacle-modal .panel .actions button{flex:1}
+.recalibrate-preview{background:var(--surface2);border:1px solid var(--accent-dim);border-radius:var(--radius);padding:.75rem;margin:.5rem 0;font-size:.85rem;font-style:italic;color:var(--accent);display:none;line-height:1.5}
+.obstacle-breakdown{margin-top:.5rem}
+.obstacle-bar{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--ink-dim);margin-bottom:.25rem}
+.obstacle-bar .bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.obstacle-bar .bar .fill{height:100%;border-radius:3px;background:var(--accent-dim);transition:width .4s ease}
+.obstacle-modal .close-btn{position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:var(--ink-muted);font-size:1.2rem;cursor:pointer;opacity:.5}
+.obstacle-modal .close-btn:hover{opacity:1}
+
+/* ─── PILIER 5 — activités latentes ─── */
+.latent-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;animation:fadeSlide .4s ease}
+.latent-banner p{font-size:.85rem;color:var(--ink-dim);margin-bottom:.75rem;line-height:1.5}
+.latent-banner .actions{display:flex;gap:.5rem}
+.latent-banner .actions button{flex:1}
+.latent-card{background:var(--surface);border:1px solid var(--accent-dim);border-left:3px solid var(--accent);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem;animation:fadeSlide .4s ease}
+.latent-card .title{font-family:var(--font-serif);font-size:.95rem;font-style:italic;color:var(--accent);margin-bottom:.35rem}
+.latent-card .detail{font-size:.75rem;color:var(--ink-dim);margin-bottom:.75rem}
+.latent-card .actions{display:flex;gap:.5rem}
+.latent-card .actions button{font-size:.75rem}
+.quick-log-btn{position:fixed;bottom:1.5rem;right:1.5rem;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--bg);border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);transition:all .2s;z-index:50;display:flex;align-items:center;justify-content:center}
+.quick-log-btn:hover{transform:scale(1.1);opacity:.9}
+.quick-log-input{position:fixed;bottom:5rem;right:1.5rem;z-index:51;display:none;animation:fadeSlide .3s ease}
+.quick-log-input.open{display:flex;gap:.35rem}
+.quick-log-input input{background:var(--surface);border:1px solid var(--accent-dim);border-radius:var(--radius);padding:.5rem .75rem;font-size:.8rem;color:var(--ink);outline:none;width:200px;font-family:var(--font-sans)}
+.quick-log-input button{background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius);padding:.5rem .75rem;font-size:.8rem;cursor:pointer}
+@media(max-width:480px){.quick-log-btn{bottom:1rem;right:1rem;width:42px;height:42px;font-size:1.2rem}.quick-log-input{right:1rem;bottom:4.5rem}.quick-log-input input{width:160px}}
+
+/* ─── DEEP QUESTIONING ─── */
+.question-btn{font-size:.65rem;color:var(--ink-dim);cursor:pointer;background:none;border:1px solid var(--border);border-radius:8px;padding:.1rem .4rem;transition:all .2s}
+.question-btn:hover{border-color:var(--accent-dim);color:var(--accent)}
+.question-card{background:var(--surface);border:1px solid var(--accent-dim);border-left:3px solid var(--accent);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:.75rem;animation:fadeSlide .4s ease}
+.question-card .q{font-family:var(--font-serif);font-size:.95rem;font-style:italic;color:var(--accent);margin-bottom:.5rem}
+.question-card .q .depth{opacity:.5;font-size:.8rem}
+.question-card textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .75rem;font-size:.85rem;color:var(--ink);font-family:var(--font-sans);resize:none;outline:none;min-height:48px;transition:border-color .2s;margin-bottom:.5rem}
+.question-card textarea:focus{border-color:var(--accent-dim)}
+.question-card .q-actions{display:flex;gap:.5rem}
+.question-card .q-actions button{font-size:.75rem}
+.question-card .children{margin-top:.75rem;padding-left:.75rem;border-left:1px solid var(--accent-dim)}
+.question-card .children .q{font-size:.85rem;color:var(--ink-dim)}
+.checkin-header{font-family:var(--font-serif);font-size:.9rem;color:var(--ink-dim);margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.history-entry{font-size:.8rem;color:var(--ink-dim);padding:.5rem 0;border-bottom:1px solid var(--border);line-height:1.5}
+.history-entry .date{color:var(--ink-muted);font-size:.7rem}
+.history-entry .qa{color:var(--ink)}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(-200px) rotate(720deg);opacity:0}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes celebrate{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+.animate-in{animation:fadeSlide .5s ease both}
+.goal-card{animation:fadeSlide .4s ease both}
+.goal-card:nth-child(1){animation-delay:.05s}
+.goal-card:nth-child(2){animation-delay:.1s}
+.goal-card:nth-child(3){animation-delay:.15s}
+.celebration-overlay{position:fixed;inset:0;z-index:300;pointer-events:none;overflow:hidden}
+.celebration-piece{position:absolute;bottom:-10px;width:8px;height:8px;border-radius:2px;animation:confetti 2s ease-out forwards}
+.celebration-piece:nth-child(odd){background:var(--accent)}
+.celebration-piece:nth-child(even){background:var(--accent-dim)}
+.score-pulse{animation:celebrate .6s ease 3}
+.completion-banner{background:linear-gradient(135deg,rgba(90,69,48,.3),rgba(24,24,28,.95));border:1px solid var(--accent);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;animation:fadeSlide .5s ease;text-align:center}
+.completion-banner h3{font-family:var(--font-serif);color:var(--accent);font-size:1.1rem;margin-bottom:.5rem}
+.completion-banner p{font-size:.8rem;color:var(--ink-dim);margin-bottom:.75rem;line-height:1.5}
+.completion-banner .actions{display:flex;gap:.5rem;justify-content:center}
+.experience-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.5rem;opacity:.7;transition:all .2s;cursor:pointer}
+.experience-card:hover{opacity:1;border-color:var(--accent-dim)}
+.experience-card .id{font-family:var(--font-serif);font-size:.9rem;color:var(--ink-dim);margin-bottom:.15rem}
+.experience-card .meta{font-size:.7rem;color:var(--ink-muted)}
+
+/* ─── KINETIC GRID BACKGROUND ─── */
+#kineticCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.6}
+body{background:var(--bg)}
+
+/* ─── SPLASH SCREEN ─── */
+.splash-overlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease}
+.splash-overlay.hidden{opacity:0;pointer-events:none}
+.splash-title{font-family:var(--font-serif);font-size:2.2rem;color:var(--ink);letter-spacing:.04em;margin-bottom:1rem;opacity:0;animation:fadeSlide .8s ease .3s forwards}
+.splash-title span{color:var(--accent)}
+.splash-sub{font-size:.8rem;color:var(--ink-muted);font-style:italic;margin-bottom:2.5rem;opacity:0;animation:fadeSlide .8s ease .6s forwards}
+.splash-safe{position:relative;width:180px;height:150px;margin-bottom:2rem;opacity:0;animation:fadeSlide .8s ease .9s forwards}
+.safe-body{width:180px;height:140px;background:linear-gradient(145deg,#2a2826,#1a1816);border:3px solid #3a3836;border-radius:8px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05)}
+.safe-door{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(145deg,#2a2826,#1a1816);border-radius:6px;transform-origin:left center;transition:transform 1.2s cubic-bezier(.4,0,.2,1);z-index:2}
+.safe-door.open{transform:perspective(800px) rotateY(-110deg)}
+.safe-dial{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border:3px solid #4a4846;border-radius:50%;background:radial-gradient(circle,#3a3836,#1a1816);z-index:3;display:flex;align-items:center;justify-content:center}
+.safe-dial.spinning{animation:spinDial 5s cubic-bezier(.4,0,.2,1)}
+.safe-dial-inner{width:16px;height:16px;border-radius:50%;background:var(--accent);opacity:.8}
+.dial-mark{position:absolute;width:2px;height:8px;background:#5a5856;top:4px;left:50%;margin-left:-1px;transform-origin:50% 24px}
+.safe-handle{position:absolute;right:12px;top:50%;margin-top:-8px;width:24px;height:16px;border:3px solid #4a4846;border-radius:4px;background:#3a3836;z-index:3;transition:transform 1s ease .5s}
+.safe-handle.turned{transform:rotate(90deg)}
+.safe-glow{position:absolute;inset:-10px;border-radius:12px;background:radial-gradient(ellipse at center, rgba(196,154,108,.15), transparent 70%);opacity:0;transition:opacity 1s ease;z-index:0}
+.safe-glow.active{opacity:1}
+.splash-btn{background:transparent;border:1px solid var(--accent-dim);color:var(--accent);border-radius:var(--radius);padding:.75rem 2.5rem;font-size:1rem;cursor:pointer;transition:all .3s;opacity:0;animation:fadeSlide .8s ease 1.2s forwards;font-family:var(--font-serif);letter-spacing:.06em}
+.splash-btn:hover{background:var(--accent-dim);color:var(--ink);border-color:var(--accent)}
+.splash-btn:disabled{opacity:.3;cursor:not-allowed}
+
+@keyframes spinDial{0%{transform:rotate(0deg)}100%{transform:rotate(720deg)}}
+@media(max-width:480px){body{padding:1rem .75rem}.goal-form .input-row{flex-direction:column}.identity-reveal .identity{font-size:1.15rem}.goal-card .identity-line{font-size:1rem}}
+</style>
+</head>
+<body>
+<div class="splash-overlay" id="splash">
+  <div class="splash-title">miroir<span>.</span></div>
+  <div class="splash-sub">carnet d'engagements</div>
+  <div class="splash-safe" id="splashSafe">
+    <div class="safe-body">
+      <div class="safe-glow" id="safeGlow"></div>
+      <div class="safe-door" id="safeDoor">
+        <div class="safe-dial" id="safeDial">
+          <div class="dial-mark" style="transform:rotate(0deg)"></div>
+          <div class="dial-mark" style="transform:rotate(30deg)"></div>
+          <div class="dial-mark" style="transform:rotate(60deg)"></div>
+          <div class="dial-mark" style="transform:rotate(90deg)"></div>
+          <div class="dial-mark" style="transform:rotate(120deg)"></div>
+          <div class="dial-mark" style="transform:rotate(150deg)"></div>
+          <div class="dial-mark" style="transform:rotate(180deg)"></div>
+          <div class="dial-mark" style="transform:rotate(210deg)"></div>
+          <div class="dial-mark" style="transform:rotate(240deg)"></div>
+          <div class="dial-mark" style="transform:rotate(270deg)"></div>
+          <div class="dial-mark" style="transform:rotate(300deg)"></div>
+          <div class="dial-mark" style="transform:rotate(330deg)"></div>
+          <div class="safe-dial-inner"></div>
+        </div>
+      </div>
+      <div class="safe-handle" id="safeHandle"></div>
+    </div>
+  </div>
+  <button class="splash-btn" id="splashBtn" onclick="(function(){var btn=document.getElementById('splashBtn');btn.disabled=true;btn.textContent='...';var dial=document.getElementById('safeDial');dial.classList.add('spinning');setTimeout(function(){dial.classList.remove('spinning');document.getElementById('safeDoor').classList.add('open');document.getElementById('safeHandle').classList.add('turned');document.getElementById('safeGlow').classList.add('active');btn.textContent='\u2728';setTimeout(function(){document.getElementById('splash').classList.add('hidden');if(!window._loaded){window._loaded=true;try{load()}catch(e){}try{loadTone()}catch(e){}try{document.getElementById('goalInput').focus()}catch(e){}}setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove()},800)},1000)},5000)})()">ouvrir</button>
+</div>
+<div class="container">
+  <header><div><h1>miroir<span>.</span></h1><div class="subtitle">carnet d'engagements</div></div>
+    <div style="display...[truncated]
+</header>
+  <div class="empty-state" id="emptyState">
+    <div class="symbol">&#9758;</div>
+    <p>Quel engagement veux-tu incarner&nbsp;?</p>
+    <p style="font-size:.8rem;color:var(--ink-muted);">Pas une tâche. Une manière d'être.</p>
+  </div>
+  <form class="goal-form" id="goalForm">
+    <label for="goalInput">Je choisis de...</label>
+    <div class="input-row">
+      <input type="text" id="goalInput" placeholder="ex: aller à la salle 3x par semaine" autocomplete="off" />
+      <button type="submit" id="submitBtn">inscrire</button>
+    </div>
+  </form>
+  <div class="identity-reveal" id="identityReveal">
+    <div class="original"><strike id="revealOriginal"></strike></div>
+    <div class="identity" id="revealIdentity"></div>
+    <div class="actions">
+      <button class="btn-primary" id="confirmGoalBtn">c'est juste</button>
+      <button class="btn-ghost" id="retryGoalBtn">reformuler</button>
+    </div>
+  </div>
+  <div id="interventionZone"></div>
+  <div id="latentZone"></div>
+  <div id="goalList"></div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<canvas id="kineticCanvas"></canvas>
+<button class="quick-log-btn" id="quickLogBtn" title="Noter une activité">+</button>
+<div class="quick-log-input" id="quickLogInput">
+  <input type="text" id="quickLogField" placeholder="ex: j'ai fait du yoga" autocomplete="off" />
+  <button id="quickLogSubmit">→</button>
+</div>
+
+<!-- Modal obstacles -->
+<div class="obstacle-modal" id="obstacleModal">
+  <div class="panel" style="position:relative">
+    <button class="close-btn" id="modalClose">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Modal ton -->
+<div class="obstacle-modal" id="toneModal">
+  <div class="panel" style="position:relative;max-width:340px">
+    <button class="close-btn" id="toneModalClose">&times;</button>
+    <div id="toneModalBody"></div>
+  </div>
+</div>
+
+<!-- Modal questions -->
+<div class="obstacle-modal" id="questionModal">
+  <div class="panel" style="position:relative">
+    <button class="close-btn" id="questionModalClose">&times;</button>
+    <div id="questionModalBody"></div>
+  </div>
+</div>
+
+<script>
+const API='';const CAUSES=['pas eu le temps','mauvais moment','mal calibré','pas prioritaire','autre'];
+function api(p,o={}){return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json())}
+let goals=[],pendingGoal=null;
+
+function renderGoal(g){
+  const ds=g.lastInteraction?Math.round((Date.now()-new Date(g.lastInteraction).getTime())/864e5):Math.round((Date.now()-new Date(g.createdAt).getTime())/864e5);
+  const dc=ds<=3?'fresh':ds<=7?'warm':'stale';
+  const tr=g.trend||{};const svg=renderSparkline(tr.daily);
+  let tl='',tc='';
+  if(tr.direction==='declining'){if(tr.severity==='critical'){tl='plus aucune interaction cette semaine';tc='critical'}else if(tr.severity==='moderate'){tl='régularité en forte baisse';tc='declining'}else{tl='régularité en baisse';tc='declining'}}
+  const qBtn=g.lastScore!=null?`<button class="question-btn" data-id="${g.id}" title="Voir stats">📊</button>`:'';
+  const card=document.createElement('div');
+  card.className=`goal-card${tr.direction==='declining'&&tr.severity!=='none'?' trend-'+tr.severity:''}`;
+  card.innerHTML=`<button class="delete-btn" data-id="${g.id}">&times;</button>
+    <div class="identity-line" data-id="${g.id}">${esc(g.identity||'')}</div>
+    <button class="original-toggle" data-id="${g.id}">afficher l'original</button>
+    <div class="original-text" id="orig-${g.id}">${esc(g.text||'')}</div>
+    <div class="bottom-row"><div class="sparkline-row">${svg}${tl?`<span class="trend-label ${tc}">${tl}</span>`:''}</div>${qBtn}</div>
+    <div class="meta"><div class="meta-left"><span class="days-since"><span class="${dc}">${ds}j</span></span></div>
+      <div style="display:flex;gap:.35rem"><button class="log-btn" data-id="${g.id}">c'est moi</button>
+      <button class="recalibrate-btn" data-id="${g.id}" title="options">⋯</button></div></div>`;
+  document.getElementById('goalList').appendChild(card);
+}
+
+async function load(){
+  const org=await api('/api/goals/organized');
+  goals=org.all||[];
+  document.getElementById('goalList').innerHTML='';
+  
+  // Today's focus (urgent)
+  if(org.urgent&&org.urgent.length){
+    document.getElementById('goalList').innerHTML+=`<div style="font-size:.7rem;color:var(--danger);text-transform:uppercase;letter-spacing:.08em;margin:1rem 0 .5rem">🔴 Prioritaire</div>`;
+    org.urgent.forEach(g=>renderGoal(g));
+  }
+  // Normal
+  if(org.normal&&org.normal.length){
+    document.getElementById('goalList').innerHTML+=`<div style="font-size:.7rem;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;margin:1rem 0 .5rem">● En cours</div>`;
+    org.normal.forEach(g=>renderGoal(g));
+  }
+  // Stable
+  if(org.stable&&org.stable.length){
+    document.getElementById('goalList').innerHTML+=`<div style="font-size:.7rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin:1rem 0 .5rem">○ Stable</div>`;
+    org.stable.forEach(g=>renderGoal(g));
+  }
+  
+  const empty=document.getElementById('emptyState');
+  empty.style.display=goals.length===0?'block':'none';
+  loadInterventions(document.getElementById('interventionZone'));
+  loadLatent();
+  loadDailyCheck();
+  loadExperiences();
+  checkCompletions();
+  bindEvents();
+}
+
+function render(){
+  const list=document.getElementById('goalList'),empty=document.getElementById('emptyState'),zone=document.getElementById('interventionZone');
+  empty.style.display=goals.length===0?'block':'none';
+  list.innerHTML='';
+  goals.forEach(g=>{
+    const ds=g.lastInteraction?Math.round((Date.now()-new Date(g.lastInteraction).getTime())/864e5):Math.round((Date.now()-new Date(g.createdAt).getTime())/864e5);
+    const dc=ds<=3?'fresh':ds<=7?'warm':'stale';
+    const tr=g.trend||{};const svg=renderSparkline(tr.daily);
+    let tl='',tc='';
+    if(tr.direction==='declining'){if(tr.severity==='critical'){tl='plus aucune interaction cette semaine';tc='critical'}else if(tr.severity==='moderate'){tl='régularité en forte baisse';tc='declining'}else{tl='régularité en baisse';tc='declining'}}
+    const obs=g.obstacles||{};
+    const obsLabel=obs.total>0?`<span class="obstacle-info" data-id="${g.id}">⚑ ${obs.total} · ${obs.breakdown[0]?.cause||''}</span>`:'';
+    const qCount=g.questions?.total||0;
+    const qLabel=qCount>0?`<button class="question-btn" data-id="${g.id}" title="Questions">💬 ${qCount}</button>`:'';
+    const card=document.createElement('div');
+    card.className=`goal-card${tr.direction==='declining'&&tr.severity!=='none'?' trend-'+tr.severity:''}`;
+    card.innerHTML=`<button class="delete-btn" data-id="${g.id}">&times;</button>
+      <div class="identity-line" data-id="${g.id}">${esc(g.identity)}</div>
+      <button class="original-toggle" data-id="${g.id}">afficher l'original</button>
+      <div class="original-text" id="orig-${g.id}">${esc(g.text)}</div>
+      <div class="bottom-row"><div class="sparkline-row">${svg}${tl?`<span class="trend-label ${tc}">${tl}</span>`:''}</div>${qLabel}${obsLabel}</div>
+      <div class="meta"><div class="meta-left"><span class="days-since"><span class="${dc}">${ds}j</span></span></div>
+        <div style="display:flex;gap:.35rem"><button class="log-btn" data-id="${g.id}">c'est moi</button>
+        <button class="recalibrate-btn" data-id="${g.id}" title="recalibrer">↻</button></div></div>`;
+    list.appendChild(card);
+  });
+  loadInterventions(zone);bindEvents();
+}
+
+function renderSparkline(d){
+  if(!d||d.length<3)return'';const w=48,h=18,pad=2,iw=w-pad*2,ih=h-pad*2,st=iw/(d.length-1);
+  const dots=d.map((v,i)=>({x:pad+i*st,y:pad+ih-(v>0?ih*.85:ih*.15),a:v>0}));
+  const avg=d.map((_,i)=>{const s=Math.max(0,i-3),e=Math.min(d.length-1,i+3),seg=d.slice(s,e+1),a=seg.reduce((x,y)=>x+y,0)/seg.length;return`${pad+i*st},${pad+ih-a*ih*.8}`});
+  return`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${avg.join(' ')}" fill="none" stroke="#c49a6c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>${dots.map(d=>`<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="1.3" fill="${d.a?'#c49a6c':'#2a2826'}"/>`).join('')}</svg>`
+}
+
+async function loadInterventions(zone){
+  try{
+    const ints=await api('/api/interventions');zone.innerHTML='';
+    if(!ints.length)return;const iv=ints[0];
+    const div=document.createElement('div');div.className='intervention';
+    div.innerHTML=`<div class="question">${esc(iv.question)}</div>
+      <div class="actions">
+        <button data-action="obstacle" data-goal="${iv.goalId}">identifier l'obstacle</button>
+        <button data-action="log" data-goal="${iv.goalId}">en fait, oui</button>
+        ${iv.type==='predictive'?`<button data-action="acknowledge" data-goal="${iv.goalId}">j'ai vu</button>`:''}
+        <button class="dismiss" data-action="dismiss" data-goal="${iv.goalId}">pas maintenant</button>
+      </div>`;
+    zone.appendChild(div);bindInterventionEvents(div);
+  }catch(e){}
+}
+
+function bindInterventionEvents(el){
+  el.querySelectorAll('button').forEach(btn=>{
+    btn.onclick=async()=>{
+      const a=btn.dataset.action,id=btn.dataset.goal;
+      if(a==='log'){await logInteraction(id)}
+      else if(a==='obstacle'){showObstacleModal(id)}
+      else{await api('/api/interventions/dismiss',{method:'POST',body:JSON.stringify({goalId:id,type:a==='acknowledge'?'predictive':'silence',action:a})});el.remove()}
+    };
+  });
+}
+
+function bindEvents(){
+  document.querySelectorAll('.original-toggle').forEach(b=>{b.onclick=()=>{const e=document.getElementById('orig-'+b.dataset.id);e.classList.toggle('visible');b.textContent=e.classList.contains('visible')?'masquer l\'original':'afficher l\'original'}});
+  document.querySelectorAll('.log-btn').forEach(b=>{b.onclick=()=>logInteraction(b.dataset.id)});
+  document.querySelectorAll('.identity-line').forEach(e=>{e.onclick=()=>logInteraction(e.dataset.id)});
+  document.querySelectorAll('.delete-btn').forEach(b=>{b.onclick=async()=>{if(confirm('Retirer cet engagement ?')){await api('/api/goals/'+b.dataset.id,{method:'DELETE'});await load()}}});
+  document.querySelectorAll('.obstacle-info').forEach(e=>{e.onclick=()=>showObstacleBreakdown(e.dataset.id)});
+  document.querySelectorAll('.recalibrate-btn').forEach(b=>{b.onclick=()=>showObstacleModal(b.dataset.id)});
+  document.querySelectorAll('.question-btn').forEach(b=>{b.onclick=()=>showScore(b.dataset.id)});
+  document.querySelectorAll('.complete-btn').forEach(b=>{b.onclick=()=>completeGoal(b.dataset.id)});
+  document.querySelectorAll('.experience-card').forEach(e=>{e.onclick=()=>showScore(e.dataset.id)});
+}
+
+/* ─── OBSTACLE MODAL ─── */
+function showObstacleModal(goalId){
+  const g=goals.find(x=>x.id===goalId);if(!g)return;
+  const m=document.getElementById('modalBody'),modal=document.getElementById('obstacleModal');
+  m.innerHTML=`<h3>Qu'est-ce qui s'est passé ?</h3><p>Pour « ${esc(g.identity)} »</p>
+    ${CAUSES.map(c=>`<button class="obstacle-option" data-cause="${c}">${c}</button>`).join('')}
+    <div class="actions"><button class="btn-primary" id="submitObstacle" disabled>valider</button>
+    <button class="btn-ghost" id="cancelObstacle">annuler</button></div>
+    <div class="recalibrate-preview" id="recalPreview"></div>`;
+  modal.classList.add('open');
+  let selected=null;
+  m.querySelectorAll('.obstacle-option').forEach(b=>{
+    b.onclick=()=>{
+      m.querySelectorAll('.obstacle-option').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');selected=b.dataset.cause;
+      document.getElementById('submitObstacle').disabled=false;
+    };
+  });
+  document.getElementById('submitObstacle').onclick=async()=>{
+    if(!selected)return;
+    await api('/api/goals/'+goalId+'/obstacle',{method:'POST',body:JSON.stringify({cause:selected})});
+    // Recalibrate suggestion
+    const r=await api('/api/goals/'+goalId+'/recalibrate',{method:'POST',body:JSON.stringify({cause:selected})});
+    const preview=document.getElementById('recalPreview');
+    preview.style.display='block';
+    preview.innerHTML=`Proposition de recalibrage :<br><strong>${esc(r.text||'')}</strong><br><em>${esc(r.identity||'')}</em>
+      <div class="actions" style="margin-top:.75rem"><button class="btn-primary" id="acceptRecal">appliquer</button>
+      <button class="btn-ghost" id="dismissRecal">non merci</button></div>`;
+    document.getElementById('acceptRecal').onclick=async()=>{
+      modal.classList.remove('open');await load();showToast('Objectif recalibré');
+    };
+    document.getElementById('dismissRecal').onclick=()=>{modal.classList.remove('open');load()};
+  };
+  document.getElementById('cancelObstacle').onclick=()=>modal.classList.remove('open');
+  document.getElementById('modalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+async function showObstacleBreakdown(goalId){
+  const g=goals.find(x=>x.id===goalId);if(!g)return;
+  const obs=await api('/api/goals/'+goalId+'/obstacles');
+  const m=document.getElementById('modalBody'),modal=document.getElementById('obstacleModal');
+  let html=`<h3>Obstacles rencontrés</h3><p>Pour « ${esc(g.identity)} »</p>`;
+  if(!obs.total){html+=`<p style="color:var(--ink-muted);font-size:.85rem">Aucun obstacle signalé.</p>`}
+  else{
+    html+=`<p style="font-size:.85rem;color:var(--ink-dim)">${obs.total} fois · cause principale : <strong style="color:var(--accent)">${obs.breakdown[0].cause}</strong> (${obs.breakdown[0].pct}%)</p><div class="obstacle-breakdown">`;
+    obs.breakdown.forEach(b=>{
+      html+=`<div class="obstacle-bar"><span style="min-width:80px">${b.cause}</span><div class="bar"><div class="fill" style="width:${b.pct}%"></div></div><span>${b.pct}%</span></div>`;
+    });
+    html+=`</div><div class="actions" style="margin-top:1rem"><button class="btn-primary" id="recalFromBreakdown">recalibrer cet objectif</button>
+      <button class="btn-ghost" id="closeBreakdown">fermer</button></div>`;
+  }
+  m.innerHTML=html;modal.classList.add('open');
+  const rb=document.getElementById('recalFromBreakdown');
+  if(rb){rb.onclick=()=>{modal.classList.remove('open');showObstacleModal(goalId)}}
+  const cb=document.getElementById('closeBreakdown')||document.getElementById('cancelObstacle');
+  if(cb)cb.onclick=()=>modal.classList.remove('open');
+  document.getElementById('modalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+/* ─── PILIER 5 — LATENT ─── */
+async function loadLatent(){
+  const z=document.getElementById('latentZone');z.innerHTML='';
+  const c=await api('/api/consent');
+  if(!c.enabled){
+    z.innerHTML=`<div class="latent-banner"><p><strong>Détection d'activités</strong> — Je peux détecter des activités que tu fais régulièrement sans les avoir déclarées, et proposer d'en faire des objectifs.</p><p style="font-size:.75rem;color:var(--ink-muted);font-style:italic">Jamais activé sans ton consentement.</p><div class="actions"><button class="btn-primary" id="enableLatent">oui, activer</button><button class="btn-ghost" id="dismissLatent">pas maintenant</button></div></div>`;
+    document.getElementById('enableLatent').onclick=async()=>{await api('/api/consent',{method:'POST',body:JSON.stringify({enabled:true})});showToast('Détection activée');loadLatent()};
+    document.getElementById('dismissLatent').onclick=()=>z.innerHTML='';
+    return;
+  }
+  const p=await api('/api/patterns');
+  if(p.patterns&&p.patterns.length){
+    p.patterns.forEach(pt=>{
+      const cd=document.createElement('div');cd.className='latent-card';
+      cd.innerHTML=`<div class="title">« On dirait que tu fais <strong>${pt.label}</strong> régulièrement (${pt.frequency}).</div><div class="detail">${pt.count} fois en 30 jours</div><div class="actions"><button class="btn-primary" data-l="${pt.label}">en faire un objectif</button><button class="btn-ghost" data-l="${pt.label}">pas pertinent</button></div>`;
+      cd.querySelectorAll('button').forEach(b=>{b.onclick=async()=>{if(b.classList.contains('btn-primary')){await api('/api/goals',{method:'POST',body:JSON.stringify({text:pt.label})});showToast('Objectif créé !');cd.remove();await load()}else{cd.remove()}}});
+      z.appendChild(cd);
+    });
+  } else {
+    z.innerHTML=`<div style="font-size:.75rem;color:var(--ink-muted);text-align:center;padding:.5rem;opacity:.5">Note des activités avec le bouton + pour détecter des patterns</div>`;
+  }
+}
+
+/* ─── DEEP QUESTIONING ─── */
+async function showDeepQuestions(goalId){
+  const g=goals.find(x=>x.id===goalId);if(!g)return;
+  const m=document.getElementById('questionModalBody'),modal=document.getElementById('questionModal');
+  // Load checkin + questions
+  const checkin=await api('/api/goals/'+goalId+'/checkin');
+  const history=await api('/api/goals/'+goalId+'/history');
+  const rootQs=checkin.unanswered.filter(q=>!q.parent_id);
+  const childQs=checkin.unanswered.filter(q=>q.parent_id);
+  let html=`<h3>${esc(g.identity)}</h3>`;
+  // History section
+  if(history.totalSessions>0){
+    html+=`<div class="checkin-header">${history.totalSessions} séances · ${history.totalResponses} réponses</div>`;
+    html+=Object.entries(history.byDate).slice(0,5).map(([date,rs])=>`<div class="history-entry"><span class="date">${date}</span>${rs.map(r=>`<br><span class="qa">💬 ${esc(r.question||'?')}<br>✎ ${esc(r.response)}</span>`).join('')}</div>`).join('');
+  }
+  // Today's unanswered root questions
+  if(rootQs.length){
+    rootQs.forEach(q=>{
+      html+=`<div class="question-card"><div class="q">${esc(q.question)}</div><textarea id="q-${q.id}" rows="2" placeholder="Écris ta réponse..."></textarea>
+        <div class="q-actions"><button class="btn-primary" data-qid="${q.id}" data-action="answer">répondre</button>
+        <button class="btn-ghost" data-qid="${q.id}" data-action="skip">passer</button></div></div>`;
+    });
+  } else if(!childQs.length){
+    html+=`<p style="font-size:.85rem;color:var(--ink-dim)">Toutes les questions ont été répondues aujourd'hui 👍</p>`;
+  }
+  // Children of recently answered questions
+  if(childQs.length){
+    html+=`<div style="margin-top:.5rem;font-size:.8rem;color:var(--ink-dim)">🌿 Questions de suivi :</div>`;
+    childQs.forEach(q=>{
+      html+=`<div class="question-card"><div class="q"><span class="depth">↳ </span>${esc(q.question)}</div><textarea id="q-${q.id}" rows="2" placeholder="..."></textarea>
+        <div class="q-actions"><button class="btn-primary" data-qid="${q.id}" data-action="answer">répondre</button>
+        <button class="btn-ghost" data-qid="${q.id}" data-action="skip">passer</button></div></div>`;
+    });
+  }
+  html+=`<div class="actions" style="margin-top:.5rem"><button class="btn-ghost" id="regenQuestions">🔄 nouvelles questions</button>
+    <button class="btn-ghost" id="closeQuestions">fermer</button></div>`;
+  m.innerHTML=html;modal.classList.add('open');
+  // Answer handler
+  m.querySelectorAll('[data-action="answer"]').forEach(b=>{
+    b.onclick=async()=>{
+      const qid=b.dataset.qid;
+      const text=document.getElementById('q-'+qid)?.value?.trim();
+      if(!text)return;
+      const r=await api('/api/goals/'+goalId+'/respond',{method:'POST',body:JSON.stringify({questionId:qid,response:text})});
+      showToast('Réponse enregistrée');
+      // If children exist, show them inline
+      if(r.children&&r.children.length){
+        const childrenDiv=document.createElement('div');childrenDiv.className='children';
+        childrenDiv.innerHTML=r.children.map(c=>`<div class="question-card"><div class="q"><span class="depth">↳ </span>${esc(c.question)}</div><textarea id="q-${c.id}" rows="2"></textarea>
+          <div class="q-actions"><button class="btn-primary" data-qid="${c.id}" data-action="answer">répondre</button>
+          <button class="btn-ghost" data-qid="${c.id}" data-action="skip">passer</button></div></div>`).join('');
+        b.closest('.question-card').after(childrenDiv);
+        // Bind the new answer buttons
+        childrenDiv.querySelectorAll('[data-action="answer"]').forEach(b2=>{
+          b2.onclick=async()=>{
+            const t=document.getElementById('q-'+b2.dataset.qid)?.value?.trim();
+            if(!t)return;
+            await api('/api/goals/'+goalId+'/respond',{method:'POST',body:JSON.stringify({questionId:b2.dataset.qid,response:t})});
+            showToast('Réponse enregistrée');
+            b2.closest('.question-card').querySelector('textarea').disabled=true;
+            b2.disabled=true;b2.textContent='✓';
+          };
+        });
+      }
+      b.closest('.question-card').querySelector('textarea').disabled=true;
+      b.disabled=true;b.textContent='✓';
+    };
+  });
+  // Skip handlers
+  m.querySelectorAll('[data-action="skip"]').forEach(b=>{b.onclick=()=>{b.closest('.question-card').style.display='none'}});
+  document.getElementById('regenQuestions').onclick=async()=>{
+    await api('/api/goals/'+goalId+'/questions',{method:'POST'});
+    showToast('Nouvelles questions générées');
+    showDeepQuestions(goalId);
+  };
+  document.getElementById('closeQuestions').onclick=()=>modal.classList.remove('open');
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+/* ─── DYNAMIC QUESTIONING (LLM en direct) ─── */
+async function autoQuestion(goalId,isEvening=false){
+  if(!goalId)return;
+  const modal=document.getElementById('questionModal'),m=document.getElementById('questionModalBody');
+  modal.classList.add('open');
+  const conv=[];
+  
+  // Preamble
+  m.innerHTML=`<div style="text-align:center;padding:1rem 0"><h3>${isEvening?'🌙 Bilan de fin de journée':'🎯 Explorons ensemble'}</h3>
+    <p style="font-size:.85rem;color:var(--ink-dim);margin:.75rem 0;line-height:1.6">${isEvening?'Faisons le point sur ta journée.':'Je vais te poser des questions personnalisées pour mieux te comprendre. Chaque question dépend de ta réponse précédente.'}</p>
+    <div class="actions" style="justify-content:center"><button class="btn-primary" id="preambleGo">commencer →</button></div></div>`;
+  document.getElementById('preambleGo').onclick=()=>askNext();
+  
+  function thinkingDelay(ms){return new Promise(r=>{
+    m.innerHTML=`<div style="text-align:center;padding:2rem"><span style="font-size:.85rem;color:var(--ink-muted);font-style:italic">réflexion<span class="dots"></span></span></div>`;
+    const dots=m.querySelector('.dots');let c=0;
+    const iv=setInterval(()=>{c=(c+1)%4;dots.textContent='.'.repeat(c||1)},300);
+    setTimeout(()=>{clearInterval(iv);r()},ms);
+  })}
+  
+  async function askNext(depth=0){
+    if(depth>=5){
+      m.innerHTML=`<h3>✅ ${isEvening?'Bilan complété':'Session terminée'}</h3>
+        <p style="font-size:.85rem;color:var(--ink-dim);margin:.5rem 0 1rem">${isEvening?'Je calcule ton score...':'Tu veux voir ton score ou continuer ?'}</p>
+        <div class="actions">
+          <button class="btn-primary" id="goScore">📊 voir mon score</button>
+          ${isEvening?'':`<button class="btn-ghost" id="goDeeper">🌿 continuer</button>`}
+          <button class="btn-ghost" id="closeQ">fermer</button>
+        </div>`;
+      document.getElementById('goScore').onclick=()=>showScore(goalId);
+      if(!isEvening)document.getElementById('goDeeper').onclick=async()=>{showToast('On continue !');askNext(0)};
+      document.getElementById('closeQ').onclick=()=>modal.classList.remove('open');
+      document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+      modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+      return;
+    }
+    
+    // Get next question from LLM (dynamic, based on conversation)
+    const g=goals.find(x=>x.id===goalId);
+    if(depth===0)await thinkingDelay(500+Math.random()*300);
+    
+    const r=await api('/api/goals/'+goalId+'/next-question',{
+      method:'POST',
+      body:JSON.stringify({conversation:conv,isEvening})
+    });
+    const question=r.question||'Comment te sens-tu par rapport à ton engagement aujourd\'hui ?';
+    
+    m.innerHTML=`<div style="margin-bottom:.5rem;font-size:.75rem;color:var(--ink-muted)">Question ${depth+1}/5 ${isEvening?'· Bilan soirée':''}</div>
+      <div class="question-card"><div class="q">${esc(question)}</div>
+      <textarea id="q-${goalId}" rows="2" placeholder="Ta réponse..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .75rem;font-size:.85rem;color:var(--ink);font-family:var(--font-sans);resize:none;outline:none;min-height:48px"></textarea>
+      <div class="q-actions"><button class="btn-primary" id="submitAnswer">suivant →</button></div></div>`;
+    const ta=document.getElementById('q-'+goalId);ta.focus();
+    ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('submitAnswer')?.click()}};
+    document.getElementById('submitAnswer').onclick=async()=>{
+      const txt=ta.value.trim();if(!txt)return;
+      conv.push({q:question,a:txt});
+      // Save via respond (use a temp question ID for record keeping)
+      const tempQId='dyn-'+Date.now();
+      await api('/api/goals/'+goalId+'/respond',{method:'POST',body:JSON.stringify({questionId:tempQId,response:txt})});
+      // Dynamic thinking delay
+      await thinkingDelay(600+Math.random()*600);
+      askNext(depth+1);
+    };
+  }
+}
+
+/* ─── EVENING CHECK (toujours visible) ─── */
+function loadEveningCheck(){
+  if(!goals.length)return;
+  const zone=document.getElementById('interventionZone');
+  if(document.getElementById('eveningSection'))return;
+  const hasActivity=goals.some(g=>g.todayAnswered>0);
+  if(!hasActivity)return;
+  const div=document.createElement('div');div.id='eveningSection';
+  div.className='intervention';
+  const target=goals.find(g=>g.todayAnswered>0)||goals[0];
+  div.innerHTML=`<div class="question">🌙 Bilan de fin de journée disponible</div>
+    <div class="actions">
+      <button class="btn-primary" id="eveningStart">faire le bilan</button>
+      <button class="btn-ghost" id="eveningDismiss">plus tard</button>
+    </div>`;
+  document.getElementById('eveningStart').onclick=()=>{div.remove();autoQuestion(target.id,true)};
+  document.getElementById('eveningDismiss').onclick=()=>div.remove();
+  zone.prepend(div);
+}
+
+/* ─── SCORE DISPLAY ─── */
+async function showScore(goalId){
+  const g=goals.find(x=>x.id===goalId);if(!g)return;
+  const modal=document.getElementById('questionModal'),m=document.getElementById('questionModalBody');
+  const r=await api('/api/goals/'+goalId+'/score',{method:'POST'});
+  const scores=await api('/api/goals/'+goalId+'/scores');
+  const maxScore=Math.max(...scores.map(s=>s.score),100);
+  const svgW=300,svgH=130,pad=30;
+  const cw=svgW-pad*2,ch=svgH-pad-10;
+  let bars='';
+  if(scores.length>1){
+    scores.forEach((s,i)=>{
+      const bw=Math.max(6,Math.min(20,cw/scores.length-2));
+      const x=pad+i*(cw/(scores.length-1))-bw/2;
+      const h=Math.max(2,(s.score/maxScore)*ch);
+      const y=svgH-pad-h;
+      const col=s.score<40?'#8a4a3e':s.score<65?'#b8863a':'#5a7a4e';
+      bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${col}" opacity=".9">
+        <animate attributeName="height" from="0" to="${h}" dur=".6s" fill="freeze"/>
+        <animate attributeName="y" from="${svgH-pad}" to="${y}" dur=".6s" fill="freeze"/>
+      </rect>
+      <text x="${x+bw/2}" y="${y-4}" font-size="8" fill="${col}" text-anchor="middle" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur=".8s" fill="freeze"/>
+        ${s.score}
+      </text>
+      <text x="${x+bw/2}" y="${svgH-pad+12}" font-size="7" fill="#49473f" text-anchor="middle">${s.session_date.slice(5)}</text>`;
+    });
+    // Trend line
+    const pts=scores.map((s,i)=>`${pad+i*(cw/(scores.length-1))},${svgH-pad-(s.score/maxScore)*ch}`).join(' ');
+    bars+=`<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,2" opacity=".5"/>`;
+  }
+  // Diff from first score
+  let diffHtml='';
+  if(scores.length>=2){
+    const first=scores[0].score,last=scores[scores.length-1].score;
+    const diff=last-first;
+    const arrow=diff>=0?'↑':'↓';
+    diffHtml=`<span style="font-size:.8rem;color:${diff>=0?'var(--success)':'var(--danger)'};margin-left:.5rem">${arrow} ${Math.abs(diff)} points</span>`;
+  }
+  
+  m.innerHTML=`<h3>${esc(g.identity)}</h3>
+    <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.5rem">
+      <span style="font-size:.85rem;color:var(--ink-dim)">Score</span>
+      <strong style="font-size:2.5rem;color:${r.score<40?'var(--danger)':r.score<65?'#b8863a':'var(--success)'}">${r.score}</strong>
+      <span style="font-size:.9rem;color:var(--ink-muted)">/100</span>${diffHtml}
+    </div>
+    <p style="font-size:.85rem;color:var(--ink-dim);font-style:italic;padding:.5rem;background:var(--surface2);border-radius:var(--radius);margin-bottom:.75rem">${esc(r.feedback)}</p>
+    ${scores.length>1?`<svg width="${svgW}" height="${svgH+18}" viewBox="0 0 ${svgW} ${svgH+18}" style="display:block;margin:0 auto">
+      <line x1="${pad}" y1="${svgH-pad}" x2="${svgW-pad}" y2="${svgH-pad}" stroke="#2a2826" stroke-width="1"/>
+      <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${svgH-pad}" stroke="#2a2826" stroke-width="1"/>
+      ${bars}
+    </svg>`:'<p style="font-size:.75rem;color:var(--ink-muted);text-align:center">Fais plusieurs sessions pour voir ta progression 📈</p>'}
+    <div style="margin-top:.75rem;display:flex;gap:.5rem">
+      <button class="btn-primary" id="closeScore" style="flex:1">OK</button>
+      <button class="btn-ghost" id="eveningCheckBtn" style="flex:1">🌙 check soir</button>
+    </div>`;
+  document.getElementById('closeScore').onclick=()=>modal.classList.remove('open');
+  document.getElementById('eveningCheckBtn').onclick=()=>autoQuestion(goalId,true);
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+/* ─── DAILY CHECK-IN ─── */
+function loadDailyCheck(){
+  const zone=document.getElementById('interventionZone');
+  if(!goals.length||document.getElementById('dailyCheckSection'))return;
+  const done=goals.filter(g=>g.todayAnswered>0).length;
+  const total=goals.length;
+  const div=document.createElement('div');div.id='dailyCheckSection';
+  div.className='intervention';
+  div.innerHTML=`<div class="question">📋 Check du jour</div>
+    <p style="font-size:.8rem;color:var(--ink-dim);margin-bottom:.75rem">${done}/${total} objectifs suivis aujourd'hui — questions personnalisées par l'IA</p>
+    <div class="actions">
+      <button class="btn-primary" id="dailyCheckStart">${done>0?'continuer le check':'commencer le check'}</button>
+      ${done>0?`<button class="btn-ghost" id="dailyCheckReset">recommencer</button>`:''}
+    </div>`;
+  zone.prepend(div);
+  document.getElementById('dailyCheckStart').onclick=()=>dailyCheckIn();
+  const reset=document.getElementById('dailyCheckReset');
+  if(reset)reset.onclick=()=>dailyCheckIn(true);
+}
+
+async function dailyCheckIn(reset=false){
+  if(!goals.length)return;
+  const modal=document.getElementById('questionModal'),m=document.getElementById('questionModalBody');
+  modal.classList.add('open');
+  
+  // Preamble
+  m.innerHTML=`<div style="text-align:center;padding:1rem">
+    <div style="font-size:2rem;margin-bottom:.5rem">📋</div>
+    <h3>Check du jour</h3>
+    <p style="font-size:.85rem;color:var(--ink-dim);margin:.5rem 0 1rem">Je vais te poser une question sur chaque objectif pour voir où tu en es.</p>
+    <button class="btn-primary" id="preambleGo">commencer</button>
+  </div>`;
+  document.getElementById('preambleGo').onclick=()=>startDailyCheck(0,[],reset);
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+async function startDailyCheck(idx,conv,reset){
+  const modal=document.getElementById('questionModal'),m=document.getElementById('questionModalBody');
+  if(idx>=goals.length)return showDailySummary(conv);
+  
+  const g=goals[idx];
+  const history=await api('/api/goals/'+g.id+'/history');
+  const yesterday=history.byDate?Object.keys(history.byDate).pop():null;
+  const prevResp=yesterday?history.byDate[yesterday].map(r=>r.response).join(', '):'';
+  
+  const q=await api('/api/goals/'+g.id+'/next-question',{
+    method:'POST',
+    body:JSON.stringify({
+      conversation:conv.filter(c=>c.gid===g.id).map(c=>({q:c.q,a:c.a})),
+      isEvening:true,
+      context:`Check quotidien. Objectif: "${g.text}". Identité: "${g.identity}". ${prevResp?'Hier tu as dit: '+prevResp:''}`
+    })
+  });
+  
+  let steps='';const today=new Date().toISOString().slice(0,10);
+  for(let i=0;i<idx;i++){const c=conv.find(x=>x.gid===goals[i].id);steps+=`<div style="font-size:.7rem;color:var(--ink-dim);padding:.15rem 0">${c?'✅':'⏳'} ${goals[i].identity.slice(0,30)}...</div>`}
+  steps+=`<div style="font-size:.7rem;color:var(--accent);padding:.15rem 0;font-weight:bold">👉 ${g.identity.slice(0,30)}...</div>`;
+  for(let i=idx+1;i<goals.length;i++)steps+=`<div style="font-size:.7rem;color:var(--ink-muted);padding:.15rem 0">⬜ ${goals[i].identity.slice(0,30)}...</div>`;
+  
+  m.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <span style="font-size:.7rem;color:var(--ink-muted)">${idx+1}/${goals.length}</span>
+      <span style="font-size:.7rem;color:var(--ink-dim);font-style:italic">${today}</span>
+    </div>
+    <div class="progress-steps">${steps}</div>
+    <div style="margin:.75rem 0;padding:.75rem;background:var(--surface2);border-radius:var(--radius)">
+      <div style="font-family:var(--font-serif);font-size:.9rem;color:var(--accent);margin-bottom:.25rem">${esc(g.identity)}</div>
+      <div style="font-size:.85rem;color:var(--ink);margin:.5rem 0">${esc(q.question)}</div>
+      <textarea id="dailyAnswer" rows="2" placeholder="Ta réponse..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .75rem;font-size:.85rem;color:var(--ink);font-family:var(--font-sans);resize:none;outline:none;min-height:48px;transition:border-color .2s"></textarea>
+      <div class="actions" style="margin-top:.5rem">
+        <button class="btn-primary" id="answerSubmit">répondre</button>
+        <button class="btn-ghost" id="answerSkip">passer</button>
+      </div>
+    </div>`;
+  
+  document.getElementById('answerSubmit').onclick=async()=>{
+    const a=document.getElementById('dailyAnswer')?.value?.trim()||'(passé)';
+    await api('/api/goals/'+g.id+'/respond',{method:'POST',body:JSON.stringify({questionId:'checkin_daily',response:a})});
+    conv.push({gid:g.id,q:q.question,a});
+    startDailyCheck(idx+1,conv,reset);
+  };
+  document.getElementById('answerSkip').onclick=()=>{
+    conv.push({gid:g.id,q:q.question,a:'(passé)'});
+    startDailyCheck(idx+1,conv,reset);
+  };
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+async function showDailySummary(conv){
+  const modal=document.getElementById('questionModal'),m=document.getElementById('questionModalBody');
+  let summary='';
+  for(const g of goals){
+    const r=await api('/api/goals/'+g.id+'/score',{method:'POST'});
+    const scores=await api('/api/goals/'+g.id+'/scores');
+    const prev=scores.length>=2?scores[scores.length-2].score:null;
+    const diff=prev!==null?r.score-prev:null;
+    const arrow=diff!==null?(diff>=0?'↑':'↓'):'';
+    const col=diff!==null?(diff>=0?'#5a7a4e':'#8a4a3e'):'var(--ink-muted)';
+    summary+=`<div style="padding:.6rem;background:var(--surface2);border-radius:var(--radius);margin-bottom:.4rem">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:.8rem;color:var(--ink)">${esc(g.identity.slice(0,40))}</span>
+        <span style="font-size:1.1rem;color:${r.score<40?'#8a4a3e':r.score<65?'#b8863a':'#5a7a4e'}" title="${prev!==null?'Hier: '+prev:'Nouveau'}">
+          ${r.score} ${diff!==null?`<span style="font-size:.75rem;color:${col}">${arrow}${Math.abs(diff)}</span>`:''}
+        </span>
+      </div>
+      <div style="font-size:.7rem;color:var(--ink-muted);margin-top:.2rem">${r.feedback.slice(0,80)}...</div>
+    </div>`;
+  }
+  
+  m.innerHTML=`
+    <h3 style="margin-bottom:.5rem">📋 Bilan du jour</h3>
+    ${summary}
+    <div style="margin-top:.75rem;display:flex;gap:.5rem">
+      <button class="btn-primary" id="closeDaily" style="flex:1">OK</button>
+      <button class="btn-ghost" id="newScoreCheck" style="flex:1">🔄 revoir</button>
+    </div>`;
+  document.getElementById('closeDaily').onclick=()=>{modal.classList.remove('open');load()};
+  document.getElementById('newScoreCheck').onclick=()=>dailyCheckIn();
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+  setTimeout(()=>load(),100);
+}
+
+/* ─── COMPLETION + EXPERIENCES ─── */
+function celebrationEffect(){
+  const overlay=document.createElement('div');overlay.className='celebration-overlay';
+  for(let i=0;i<30;i++){
+    const p=document.createElement('div');p.className='celebration-piece';
+    p.style.left=Math.random()*100+'%';p.style.animationDelay=Math.random()*1.5+'s';
+    p.style.width=(4+Math.random()*6)+'px';p.style.height=(4+Math.random()*6)+'px';
+    overlay.appendChild(p);
+  }
+  document.body.appendChild(overlay);
+  setTimeout(()=>overlay.remove(),3000);
+}
+
+async function completeGoal(goalId){
+  if(!confirm('Marquer cet objectif comme accompli ?'))return;
+  const r=await api('/api/goals/'+goalId+'/complete',{method:'POST'});
+  celebrationEffect();
+  const m=document.getElementById('questionModalBody'),modal=document.getElementById('questionModal');
+  m.innerHTML=`<div class="completion-banner"><h3>🎉 Objectif accompli</h3>
+    <p style="font-style:italic;color:var(--accent)">${esc(r.summary)}</p>
+    <p style="font-size:.75rem;color:var(--ink-muted);margin-top:.5rem">Archivé dans tes expériences.</p>
+    <div class="actions"><button class="btn-primary" id="closeComp">continuer</button></div></div>`;
+  modal.classList.add('open');
+  document.getElementById('closeComp').onclick=()=>{modal.classList.remove('open');load()};
+  document.getElementById('questionModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+}
+
+async function loadExperiences(){
+  const list=document.getElementById('goalList');
+  const data=await api('/api/goals/experiences');
+  if(!data.length)return;
+  let html=`<div style="font-size:.7rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin:1.5rem 0 .5rem">✦ Expériences</div>`;
+  data.forEach(g=>{
+    html+=`<div class="experience-card" data-id="${g.id}">
+      <div class="id">${esc(g.identity||g.text)}</div>
+      <div class="meta">Score ${g.avgScore}/100 · ${g.responseCount} réponses</div>
+    </div>`;
+  });
+  list.insertAdjacentHTML('beforeend',html);
+}
+
+async function checkCompletions(){
+  for(const g of goals){
+    try{
+      const c=await api('/api/goals/'+g.id+'/completion-check');
+      if(c.ready&&!document.getElementById('comp-'+g.id)){
+        const zone=document.getElementById('interventionZone');
+        const d=document.createElement('div');d.className='intervention';d.id='comp-'+g.id;
+        d.innerHTML=`<div class="question">🌟 « ${esc(g.identity)} » — scores solides et stables. Prêt à transformer en expérience ?</div>
+          <div class="actions"><button class="btn-primary" id="compYes-${g.id}">oui, archiver</button>
+          <button class="btn-ghost" id="compNo-${g.id}">pas encore</button></div>`;
+        document.getElementById('compYes-'+g.id).onclick=()=>{d.remove();completeGoal(g.id)};
+        document.getElementById('compNo-'+g.id).onclick=()=>d.remove();
+        zone.appendChild(d);
+      }
+    }catch(e){}
+  }
+}
+
+/* ─── ACTIONS ─── */
+async function addGoal(text){
+  document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='...';
+  try{const g=await api('/api/goals',{method:'POST',body:JSON.stringify({text})});await load();return g}
+  finally{document.getElementById('submitBtn').disabled=false;document.getElementById('submitBtn').textContent='inscrire'}
+}
+
+async function logInteraction(goalId){
+  const r=await api('/api/goals/'+goalId+'/interact',{method:'POST'});
+  if(r.reinforcement)showToast(r.reinforcement);
+  document.querySelectorAll('.intervention').forEach(el=>{if(el.querySelector(`[data-goal="${goalId}"]`))el.remove()});
+  await load();
+}
+
+function showToast(t){const c=document.getElementById('toastContainer'),x=document.createElement('div');x.className='toast';x.textContent=t;c.appendChild(x);setTimeout(()=>x.remove(),5000)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+/* ─── FORM ─── */
+const form=document.getElementById('goalForm'),input=document.getElementById('goalInput'),reveal=document.getElementById('identityReveal');
+form.onsubmit=async(e)=>{
+  e.preventDefault();const raw=input.value.trim();if(!raw||raw.length<3)return;
+  document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='...';
+  try{
+    const g=await api('/api/goals',{method:'POST',body:JSON.stringify({text:raw})});
+    document.getElementById('revealOriginal').textContent=g.text;document.getElementById('revealIdentity').textContent=g.identity;
+    reveal.style.display='block';reveal.scrollIntoView({behavior:'smooth',block:'center'});pendingGoal=g;input.value='';
+  }finally{document.getElementById('submitBtn').disabled=false;document.getElementById('submitBtn').textContent='inscrire'}
+};
+document.getElementById('confirmGoalBtn').onclick=async()=>{if(pendingGoal){const gid=pendingGoal.id;reveal.style.display='none';pendingGoal=null;await load();input.focus();setTimeout(()=>autoQuestion(gid),300)}};
+document.getElementById('retryGoalBtn').onclick=async()=>{if(pendingGoal){const r=await api('/api/goals/'+pendingGoal.id+'/reframe',{method:'POST'});if(r.identity){pendingGoal.identity=r.identity;document.getElementById('revealIdentity').textContent=r.identity}}};
+
+/* ─── TONE ─── */
+let currentTone='gentle';
+
+async function loadTone(){
+  const r=await api('/api/tone');
+  currentTone=r.tone;
+  document.getElementById('toneBtn').textContent=({poetic:'✦',punchy:'➤',gentle:'⊙',witty:'☺'})[r.tone]||'✦';
+  document.getElementById('toneBtn').title='Style : '+r.label;
+}
+
+document.getElementById('toneBtn').onclick=async()=>{
+  const r=await api('/api/tone');
+  const m=document.getElementById('toneModalBody'),modal=document.getElementById('toneModal');
+  m.innerHTML=`<h3>Style d'accompagnement</h3><p style="font-size:.8rem;color:var(--ink-dim);margin-bottom:1rem">Choisis comment tu veux que je te parle :</p>
+    ${r.tones.map(t=>`<button class="obstacle-option ${t.key===r.tone?'selected':''}" data-tone="${t.key}"><strong>${t.label}</strong> · ${t.desc}</button>`).join('')}`;
+  modal.classList.add('open');
+  m.querySelectorAll('.obstacle-option').forEach(b=>{
+    b.onclick=async()=>{
+      await api('/api/tone',{method:'POST',body:JSON.stringify({tone:b.dataset.tone})});
+      modal.classList.remove('open');
+      loadTone();
+      showToast('Ton : '+b.querySelector('strong').textContent);
+    };
+  });
+  document.getElementById('toneModalClose').onclick=()=>modal.classList.remove('open');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+};
+
+/* ─── INIT ─── */
+// Kinetic Grid background
+function initKineticGrid(){
+  const canvas=document.getElementById('kineticCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)return;
+  const GAP=30,R=350,PULL=2.4;
+  let W,H,dots=[],mouse={x:-9999,y:-9999,active:false},trail=[],raf=0;
+  
+  function resize(){
+    const dpr=window.devicePixelRatio||1;
+    W=window.innerWidth;H=window.innerHeight;
+    canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    dots=[];const cols=Math.floor(W/GAP)+2,rows=Math.floor(H/GAP)+2;
+    for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){const hx=c*GAP,hy=r*GAP;dots.push({hx,hy,x:hx,y:hy,vx:0,vy:0})}
+  }
+  resize();
+  window.addEventListener('resize',resize);
+  
+  document.addEventListener('mousemove',e=>{
+    mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true;
+    trail.push({x:e.clientX,y:e.clientY,t:performance.now()});
+    if(trail.length>80)trail.shift();
+  });
+  document.addEventListener('mouseleave',()=>{mouse.active=false});
+  
+  const ac=window.getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#c49a6c';
+  const lineCol='#c49a6c';
+  
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    for(const d of dots){
+      let ax=(d.hx-d.x)*0.08,ay=(d.hy-d.y)*0.08;
+      if(mouse.active){
+        const dx=mouse.x-d.x,dy=mouse.y-d.y,dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<R&&dist>0.001){const f=(1-dist/R)*PULL;ax+=(dx/dist)*f;ay+=(dy/dist)*f}
+      }
+      d.vx=(d.vx+ax)*0.82;d.vy=(d.vy+ay)*0.82;
+      d.x+=d.vx;d.y+=d.vy;
+    }
+    // Lines
+    const nCols=Math.floor(W/GAP)+2;
+    for(let i=0;i<dots.length;i++){
+      const d=dots[i],right=dots[i+1],down=dots[i+nCols];
+      const px=mouse.active?Math.max(0,1-Math.sqrt((mouse.x-d.x)**2+(mouse.y-d.y)**2)/R):0;
+      if(right&&(i+1)%nCols!==0){
+        ctx.globalAlpha=0.06+px*0.5;ctx.strokeStyle=lineCol;ctx.lineWidth=0.5+px*1.2;
+        ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(right.x,right.y);ctx.stroke();
+      }
+      if(down){
+        ctx.globalAlpha=0.06+px*0.5;ctx.strokeStyle=lineCol;ctx.lineWidth=0.5+px*1.2;
+        ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(down.x,down.y);ctx.stroke();
+      }
+    }
+    // Dots
+    for(const d of dots){
+      const px=mouse.active?Math.max(0,1-Math.sqrt((mouse.x-d.x)**2+(mouse.y-d.y)**2)/R):0;
+      ctx.globalAlpha=0.15+px*0.7;ctx.fillStyle='#c49a6c';
+      ctx.beginPath();ctx.arc(d.x,d.y,0.6+px*1.8,0,Math.PI*2);ctx.fill();
+    }
+    // Trail
+    const now=performance.now();
+    for(let i=1;i<trail.length;i++){
+      const a=trail[i-1],b=trail[i],age=now-b.t;
+      if(age>260)continue;
+      ctx.globalAlpha=Math.max(0,1-age/260)*0.6;ctx.strokeStyle=lineCol;ctx.lineWidth=1.5;
+      ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);
+}
+/* ─── INIT ─── */
+// Kinetic Grid background
+document.getElementById('quickLogBtn').onclick=()=>{
+  const el=document.getElementById('quickLogInput');
+  el.classList.toggle('open');
+  if(el.classList.contains('open'))document.getElementById('quickLogField').focus();
+};
+document.getElementById('quickLogSubmit').onclick=async()=>{
+  const f=document.getElementById('quickLogField'),t=f.value.trim();
+  if(!t)return;
+  await api('/api/activities',{method:'POST',body:JSON.stringify({text:t})});
+  f.value='';document.getElementById('quickLogInput').classList.remove('open');
+  showToast('Activité notée');
+  loadLatent();
+};
+document.getElementById('quickLogField').onkeydown=e=>{if(e.key==='Enter')document.getElementById('quickLogSubmit').click()};
+
+// Background init
+try{initKineticGrid()}catch(e){}
+setTimeout(async()=>{try{await load();await loadTone()}catch(e){console.warn('background load:',e)}},300);
+</script>
+</body>
+</html>
