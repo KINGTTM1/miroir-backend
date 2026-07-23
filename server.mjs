@@ -297,7 +297,7 @@ app.get('/api/goals/:id/history', (req, res) => {
   res.json({responses:rows, byDate, totalResponses:rows.length, totalSessions:Object.keys(byDate).length});
 });
 
-// ═══ SCORE (v2 — avec jours manqués) ═══
+// ═══ SCORE (v2 — avec jours manqués + streaks) ═══
 app.post('/api/goals/:id/score', async (req, res) => {
   const g = dbGet('SELECT * FROM goals WHERE id=?', [req.params.id]);
   if (!g) return res.status(404).json({error:'Introuvable'});
@@ -337,7 +337,18 @@ app.post('/api/goals/:id/score', async (req, res) => {
   const daysWithActivity = allScores.filter(s => parseInt(s.score) > 0).length;
   const consistency = totalDays > 0 ? Math.round((daysWithActivity / Math.min(dayIndex, totalDays)) * 100) : 0;
   
-  res.json({score: parseInt(todayScore.score), feedback: todayScore.feedback, previousScore: prev?.score||null, diff, answered: (dbGet("SELECT COUNT(*) as c FROM daily_responses WHERE goal_id=? AND session_date=?",[g.id,today])?.c||0), consistency});
+  // Streak calculation (consecutive days with score > 0)
+  let currentStreak = 0, longestStreak = 0, streakTemp = 0;
+  for (let i = allScores.length - 1; i >= 0; i--) {
+    if (parseInt(allScores[i].score) > 0) { streakTemp++; currentStreak++; }
+    else { if (streakTemp > longestStreak) longestStreak = streakTemp; streakTemp = 0; break; }
+  }
+  // Also check streakTemp in case all days have activity
+  if (streakTemp > longestStreak) longestStreak = streakTemp;
+  // If today is 0, current streak is 0
+  if (parseInt(todayScore.score) === 0) currentStreak = 0;
+  
+  res.json({score: parseInt(todayScore.score), feedback: todayScore.feedback, previousScore: prev?.score||null, diff, answered: (dbGet("SELECT COUNT(*) as c FROM daily_responses WHERE goal_id=? AND session_date=?",[g.id,today])?.c||0), consistency, currentStreak, longestStreak});
 });
 
 // ═══ Weekly summary ═══
@@ -369,6 +380,60 @@ Génère 2-3 phrases de bilan sincère : ce que la période révèle, le point f
   }
   
   res.json({avgScore, consistency, trend, best, worst, daysActive: completedDays, totalDays, daysWithActivity, scores, dayIndex, narrative});
+});
+
+// ═══ Stats + Milestones ═══
+app.get('/api/goals/:id/stats', (req, res) => {
+  const g = dbGet('SELECT * FROM goals WHERE id=?', [req.params.id]);
+  if (!g) return res.status(404).json({error:'Introuvable'});
+  
+  const scores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  const responses = dbAll('SELECT * FROM daily_responses WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  const dayIndex = Math.round((Date.now() - new Date(g.created_at).getTime()) / 864e5) + 1;
+  const totalDays = g.duration_days || 30;
+  const completedDays = Math.min(dayIndex, totalDays);
+  
+  // Streaks
+  let currentStreak = 0, longestStreak = 0, streakTemp = 0;
+  for (const s of scores) {
+    if (parseInt(s.score) > 0) { streakTemp++; currentStreak++; }
+    else { if (streakTemp > longestStreak) longestStreak = streakTemp; streakTemp = 0; }
+  }
+  if (streakTemp > longestStreak) longestStreak = streakTemp;
+  if (scores.length > 0 && parseInt(scores[scores.length-1].score) === 0) currentStreak = 0;
+  
+  const daysWithActivity = scores.filter(s => parseInt(s.score) > 0).length;
+  const consistency = completedDays > 0 ? Math.round((daysWithActivity / completedDays) * 100) : 0;
+  const avgScore = scores.length > 0 ? Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length) : 0;
+  
+  // Milestones
+  const milestones = [];
+  [25, 50, 75, 100].forEach(p => {
+    const needed = Math.ceil(totalDays * p / 100);
+    if (completedDays >= needed) {
+      const d = new Date(g.created_at); d.setDate(d.getDate() + needed - 1);
+      milestones.push({ pct: p, day: needed, reached: true, date: d.toISOString().slice(0,10) });
+    } else milestones.push({ pct: p, day: needed, reached: false });
+  });
+  
+  // Weekly averages
+  const byWeek = {};
+  scores.forEach(s => {
+    const d = new Date(s.session_date);
+    const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+    const wk = monday.toISOString().slice(0,10);
+    if (!byWeek[wk]) byWeek[wk] = [];
+    byWeek[wk].push(parseInt(s.score));
+  });
+  const weeklyAvgs = Object.entries(byWeek).map(([wk, scs]) => ({ week: wk, avg: Math.round(scs.reduce((a,b)=>a+b,0)/scs.length), days: scs.length }));
+  
+  res.json({
+    avgScore, consistency, currentStreak, longestStreak,
+    daysActive: completedDays, daysWithActivity, totalDays,
+    milestones, weeklyAvgs, totalResponses: responses.length,
+    bestScore: scores.length > 0 ? Math.max(...scores.map(s=>s.score)) : 0,
+    worstScore: scores.length > 0 ? Math.min(...scores.filter(s=>s.score>0).map(s=>s.score)) : 0
+  });
 });
 
 app.get('/api/goals/:id/scores', (req, res) => {
