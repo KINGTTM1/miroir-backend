@@ -303,10 +303,11 @@ async function interact(id){
   load();
 }
 
-// ═══ Score ═══
+// ═══ Score (avec streaks, milestones, hebdo) ═══
 async function showScore(id){
   const r=await req('/goals/'+id+'/score',{method:'POST'});
   const scores=await req('/goals/'+id+'/scores');
+  const stats=await req('/goals/'+id+'/stats');
   const maxS=Math.max(...scores.map(s=>s.score),100);
   const sw=320,sh=140,pad=30,cw=sw-pad*2,ch=sh-pad-10;
   let bars='',pts='';
@@ -321,6 +322,10 @@ async function showScore(id){
     pts=`<polyline points="${scores.map((s,i)=>`${pad+i*(cw/(scores.length-1))},${sh-pad-(s.score/maxS)*ch}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,2" opacity=".5"/>`;
   }
   const prev=r.previousScore;const diff=prev!==null?r.score-prev:null;
+  
+  // Stats row
+  const ms=stats.milestones||[];const msHtml=ms.map(m=>`<span style="font-size:.7rem;color:${m.reached?'var(--success)':'var(--ink-muted)'}">${m.pct}% ${m.reached?'✓':'○'}</span>`).join(' ');
+  
   const modal=document.createElement('div');modal.className='modal';
   modal.innerHTML=`<div class="modal-inner"><div style="text-align:center">
     <div style="display:flex;align-items:baseline;justify-content:center;gap:.5rem;margin:.5rem 0">
@@ -329,7 +334,18 @@ async function showScore(id){
       ${diff!==null?`<span style="font-size:.8rem;color:${diff>=0?'var(--success)':'var(--danger)'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)}</span>`:''}
     </div>
     <p style="font-size:.75rem;color:var(--ink-dim);font-style:italic;margin-bottom:.75rem">${esc(r.feedback)}</p>
+    
+    <div style="display:flex;gap:.35rem;margin-bottom:.75rem;flex-wrap:wrap;justify-content:center">
+      <span style="font-size:.7rem;background:var(--surface2);padding:.25rem .5rem;border-radius:var(--radius)">🔥 ${stats.currentStreak||0} jours</span>
+      <span style="font-size:.7rem;background:var(--surface2);padding:.25rem .5rem;border-radius:var(--radius)">🏆 ${stats.longestStreak||0} meilleur</span>
+      <span style="font-size:.7rem;background:var(--surface2);padding:.25rem .5rem;border-radius:var(--radius)">📊 ${stats.consistency||0}%</span>
+      <span style="font-size:.7rem;background:var(--surface2);padding:.25rem .5rem;border-radius:var(--radius)">⭐ ${stats.avgScore||0} moy</span>
+    </div>
+    
+    <div style="font-size:.65rem;color:var(--ink-muted);margin-bottom:.5rem">Jalons: ${msHtml}</div>
+    
     ${scores.length>1?`<svg width="${sw}" height="${sh+18}" viewBox="0 0 ${sw} ${sh+18}" style="display:block;margin:0 auto;max-width:100%"><line x1="${pad}" y1="${sh-pad}" x2="${sw-pad}" y2="${sh-pad}" stroke="#2a2826" stroke-width="1"/><line x1="${pad}" y1="${pad}" x2="${pad}" y2="${sh-pad}" stroke="#2a2826" stroke-width="1"/>${bars}${pts}</svg>`:'<p style="font-size:.65rem;color:var(--ink-muted)">Plusieurs jours pour le graphique</p>'}
+    
     <div class="actions" style="justify-content:center;margin-top:.75rem">
       <button class="btn-primary" onclick="modal.remove();load()">retour</button>
       <button class="btn" onclick="modal.remove();checkGoal('${id}','')">🌙 refaire le check</button>
