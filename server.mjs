@@ -13,8 +13,9 @@ const LLM_API_KEY  = process.env.LLM_API_KEY  || '';
 const LLM_MODEL   = process.env.LLM_MODEL    || 'llama-3.3-70b-versatile';
 const PORT        = process.env.PORT || 4242;
 const llmEnabled  = !!(LLM_ENDPOINT && LLM_API_KEY);
-const DATA_DIR    = path.resolve('data');
-const DB_PATH     = path.join(DATA_DIR, 'miroir.db');
+const RAILWAY = !!process.env.RAILWAY_SERVICE_ID;
+const DATA_DIR = RAILWAY ? path.resolve('/data') : path.resolve('data');
+const DB_PATH  = path.join(DATA_DIR, 'miroir.db');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
