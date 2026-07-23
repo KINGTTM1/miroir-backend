@@ -111,7 +111,7 @@ body{background:var(--bg)}
     <div class="safe-body">
       <div class="safe-glow" id="safeGlow"></div>
       <div class="safe-door" id="safeDoor">
-        <div class="safe-dial" id="safeDial"><div class="safe-dial-inner"></div></div>
+        <div class="safe-dial" id="safeDial">${[0,30,60,90,120,150,180,210,240,270,300,330].map(d=>`<div class="dial-mark" style="transform:rotate(${d}deg)"></div>`).join('')}<div class="safe-dial-inner"></div></div>
       </div>
       <div class="safe-handle" id="safeHandle"></div>
     </div>
