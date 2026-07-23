@@ -297,25 +297,78 @@ app.get('/api/goals/:id/history', (req, res) => {
   res.json({responses:rows, byDate, totalResponses:rows.length, totalSessions:Object.keys(byDate).length});
 });
 
-// ═══ SCORE ═══
+// ═══ SCORE (v2 — avec jours manqués) ═══
 app.post('/api/goals/:id/score', async (req, res) => {
   const g = dbGet('SELECT * FROM goals WHERE id=?', [req.params.id]);
   if (!g) return res.status(404).json({error:'Introuvable'});
   const today = new Date().toISOString().slice(0,10);
-  const responses = dbAll("SELECT * FROM daily_responses WHERE goal_id=? AND session_date=?", [g.id, today]);
-  let score=50, feedback='Pas assez de données aujourd\'hui.';
-  if (responses.length >= 1) {
-    score = Math.round(30 + Math.min(1, responses.length/5)*40 + Math.min(20, (g.interaction_count||0)*2));
-    if (llmEnabled) {
-      const answers = responses.map(r=>r.response).join(' | ');
-      const raw = await callLLM(`Sur une échelle de 0 à 100, en toute franchise, note l'engagement envers "${g.text}" (identité: "${g.identity}") basé sur les réponses: "${answers}". Réponds UNIQUEMENT par le nombre.`);
-      if (raw) { const p=parseInt(raw.replace(/[^0-9]/g,'')); if(!isNaN(p)&&p>=0&&p<=100) score=p; }
+  const createdAt = g.created_at.slice(0,10);
+  const totalDays = g.duration_days || 30;
+  const dayIndex = Math.round((Date.now() - new Date(g.created_at).getTime()) / 864e5) + 1;
+  
+  // Ensure scores for ALL days so far (fill zeros for missed days)
+  for (let d = 0; d < Math.min(dayIndex, totalDays); d++) {
+    const date = new Date(g.created_at); date.setDate(date.getDate() + d);
+    const dateStr = date.toISOString().slice(0,10);
+    const existing = dbGet("SELECT id FROM daily_scores WHERE goal_id=? AND session_date=?", [g.id, dateStr]);
+    if (!existing) {
+      const responses = dbAll("SELECT * FROM daily_responses WHERE goal_id=? AND session_date=?", [g.id, dateStr]);
+      let score = 0, feedback = 'Aucune activité ce jour-là.';
+      if (responses.length >= 1) {
+        score = Math.round(30 + Math.min(1, responses.length/5)*40);
+        if (llmEnabled) {
+          const answers = responses.map(r=>r.response).join(' | ');
+          const raw = await callLLM(`Sur une échelle de 0 à 100, en toute franchise, note l'engagement envers "${g.text}" (identité: "${g.identity}") basé sur les réponses: "${answers}". Réponds UNIQUEMENT par le nombre.`);
+          if (raw) { const p=parseInt(raw.replace(/[^0-9]/g,'')); if(!isNaN(p)&&p>=0&&p<=100) score=p; }
+        }
+        feedback = score >= 70 ? 'Bonne journée.' : score >= 40 ? 'Journée correcte.' : 'Journée difficile.';
+      }
+      dbRun("INSERT INTO daily_scores (id,goal_id,score,feedback,session_date,created_at) VALUES (?,?,?,?,?,?)", [randomUUID(), g.id, score, feedback, dateStr, new Date().toISOString()]);
     }
   }
-  const prev = dbGet("SELECT * FROM daily_scores WHERE goal_id=? AND session_date<? ORDER BY session_date DESC LIMIT 1", [g.id, today]);
-  dbRun("INSERT INTO daily_scores (id,goal_id,score,feedback,session_date,created_at) VALUES (?,?,?,?,?,?)", [randomUUID(), g.id, score, feedback, today, new Date().toISOString()]);
   dbSave();
-  res.json({score, feedback, previousScore:prev?.score||null, answered:responses.length});
+  
+  const allScores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  const todayScore = allScores.find(s => s.session_date === today) || allScores[allScores.length-1] || {score:50};
+  const prev = allScores.length >= 2 ? allScores[allScores.length-2] : null;
+  const diff = prev !== null ? todayScore.score - prev.score : null;
+  
+  // Consistency: % of days with activity
+  const daysWithActivity = allScores.filter(s => parseInt(s.score) > 0).length;
+  const consistency = totalDays > 0 ? Math.round((daysWithActivity / Math.min(dayIndex, totalDays)) * 100) : 0;
+  
+  res.json({score: parseInt(todayScore.score), feedback: todayScore.feedback, previousScore: prev?.score||null, diff, answered: (dbGet("SELECT COUNT(*) as c FROM daily_responses WHERE goal_id=? AND session_date=?",[g.id,today])?.c||0), consistency});
+});
+
+// ═══ Weekly summary ═══
+app.post('/api/goals/:id/weekly', async (req, res) => {
+  const g = dbGet('SELECT * FROM goals WHERE id=?', [req.params.id]);
+  if (!g) return res.status(404).json({error:'Introuvable'});
+  const scores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  const totalDays = g.duration_days || 30;
+  const dayIndex = Math.round((Date.now() - new Date(g.created_at).getTime()) / 864e5) + 1;
+  const completedDays = Math.min(dayIndex, totalDays);
+  const daysWithActivity = scores.filter(s => parseInt(s.score) > 0).length;
+  const consistency = completedDays > 0 ? Math.round((daysWithActivity / completedDays) * 100) : 0;
+  const avgScore = scores.length > 0 ? Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length) : 0;
+  const trend = scores.length >= 2 ? scores[scores.length-1].score - scores[0].score : 0;
+  const best = scores.length > 0 ? Math.max(...scores.map(s=>s.score)) : 0;
+  const worst = scores.length > 0 ? Math.min(...scores.filter(s=>s.score>0).map(s=>s.score)) : 0;
+  
+  let narrative = '';
+  if (llmEnabled && scores.length > 0) {
+    const data = scores.map(s => `Jour ${s.session_date}: ${s.score}/100`).join('\n');
+    const raw = await callLLM(`Résumé de période pour l'objectif "${g.text}" (identité: "${g.identity}").
+Scores sur ${scores.length} jours:\n${data}
+Moyenne: ${avgScore}/100. Régularité: ${consistency}%. Tendance: ${trend >= 0 ? '+'+trend : trend} points.
+Génère 2-3 phrases de bilan sincère : ce que la période révèle, le point fort, ce qui pourrait être amélioré.`);
+    if (raw) narrative = raw;
+  }
+  if (!narrative) {
+    narrative = `${consistency >= 80 ? 'Excellente régularité.' : consistency >= 50 ? 'Régularité moyenne.' : 'Régularité à améliorer.'} Score moyen ${avgScore}/100.${trend > 5 ? ' Nette progression.' : trend < -5 ? ' Tendance à la baisse.' : ' Stable.'}`;
+  }
+  
+  res.json({avgScore, consistency, trend, best, worst, daysActive: completedDays, totalDays, daysWithActivity, scores, dayIndex, narrative});
 });
 
 app.get('/api/goals/:id/scores', (req, res) => {
@@ -479,22 +532,33 @@ app.post('/api/goals/:id/analyze', async (req, res) => {
   const diff = prev !== null ? todayScore - prev : null;
   const daysActive = Math.round((Date.now() - new Date(g.created_at).getTime()) / 864e5) + 1;
   
-  let analysis = '';
+  let analysis = '', consistency = 0, trend = 0;
   if (llmEnabled && responses.length > 0) {
     const answers = responses.map(r => `Q: ${r.question_id || '?'}\nR: ${r.response}`).join('\n');
+    // Get week context
+    const weekly = await new Promise(r => {
+      // Reuse score logic to get all scores filled
+      const allScores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+      const daysWithAct = allScores.filter(s => parseInt(s.score) > 0).length;
+      const avgAll = allScores.length > 0 ? Math.round(allScores.reduce((s,x)=>s+x.score,0)/allScores.length) : 0;
+      consistency = g.duration_days > 0 ? Math.round((daysWithAct / Math.min(daysActive, g.duration_days)) * 100) : 0;
+      trend = allScores.length >= 2 ? allScores[allScores.length-1].score - allScores[0].score : 0;
+      r();
+    });
+    
     const raw = await callLLM(`Analyse personnalisée pour l'objectif "${g.text}" (identité: "${g.identity}").
-Jour ${daysActive}/${g.duration_days || 30}. Score aujourd'hui: ${todayScore}/100. Évolution: ${diff !== null ? (diff >= 0 ? '+'+diff : diff) : 'premier score'}.
-Réponses d'aujourd'hui:
-${answers}
+Jour ${daysActive}/${g.duration_days || 30}. Score: ${todayScore}/100. Évolution: ${diff !== null ? (diff >= 0 ? '+'+diff : diff) : 'premier score'}.
+Régularité: ${consistency}%. Tendance globale: ${trend >= 0 ? '+'+trend : trend} points.
+Réponses d'aujourd'hui:\n${answers}
 
-Génère UN paragraphe court (2-3 phrases) d'analyse sincère et personnalisée : ce que ça révèle, un point positif, un axe d'amélioration. Sois humain, pas robotique.`);
+Génère 2-3 phrases d'analyse sincère : ce que ça révèle, un point positif, un axe d'amélioration. Sois humain.`);
     if (raw) analysis = raw;
   }
   if (!analysis) {
-    analysis = `${todayScore >= 70 ? 'Bonne journée. La régularité porte ses fruits.' : todayScore >= 50 ? 'Journée correcte. Des hauts et des bas, c\'est normal.' : 'Journée difficile. L\'important est d\'être conscient de où tu en es.'} ${diff !== null ? (diff >= 0 ? 'Progression par rapport à hier.' : 'Léger recul par rapport à hier.') : ''}`;
+    analysis = `${todayScore >= 70 ? 'Bonne journée.' : todayScore >= 40 ? 'Journée correcte.' : 'Journée difficile.'}`;
   }
   
-  res.json({score: todayScore, previousScore: prev, diff, analysis, daysActive, responses: responses.length});
+  res.json({score: todayScore, previousScore: prev, diff, analysis, daysActive, responses: responses.length, consistency, trend});
 });
 
 app.listen(PORT, () => console.log('miroir → http://localhost:'+PORT));
