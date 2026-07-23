@@ -164,11 +164,9 @@ app.post('/api/goals', async (req, res) => {
   const dur = parseInt(duration) || 30;
   if (!text || text.trim().length < 3) return res.status(400).json({error:'Texte trop court'});
   
-  // Auto-complete any existing active goal
-  const existing = dbGet("SELECT * FROM goals WHERE status='active' OR status IS NULL");
-  if (existing) {
-    dbRun("UPDATE goals SET status='completed', completed_at=? WHERE id=?", [new Date().toISOString(), existing.id]);
-  }
+  // Max 3 active goals
+  const activeCount = dbGet("SELECT COUNT(*) as c FROM goals WHERE status='active' OR status IS NULL")?.c || 0;
+  if (activeCount >= 3) return res.status(400).json({error:'Maximum 3 objectifs atteint. Termine ou supprime un objectif avant d\'en créer un nouveau.'});
   
   const id = randomUUID(), now = new Date().toISOString();
   let identity = `Je suis quelqu'un qui ${text.toLowerCase().replace(/^(.*?)(?: (?:chaque|tous les|par|le|la|les|du|de la|des))?.*$/, '$1')}.`;

@@ -28,21 +28,22 @@ textarea{width:100%;background:var(--surface2);border:1px solid var(--border);bo
 textarea:focus{border-color:var(--accent-dim)}
 .actions{display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:.75rem;animation:fadeSlide .4s ease}
-.identity-text{font-family:var(--font-serif);font-size:1.3rem;color:var(--ink);line-height:1.5;margin:.5rem 0 1rem}
-.original-text{font-size:.75rem;color:var(--ink-muted);text-decoration:line-through;margin-bottom:.5rem}
-.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:.5rem 0}
+.identity-text{font-family:var(--font-serif);font-size:1.1rem;color:var(--ink);line-height:1.5;margin:.25rem 0 .5rem}
+.original-text{font-size:.7rem;color:var(--ink-muted);text-decoration:line-through;margin-bottom:.25rem}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin:.35rem 0}
 .progress-bar .fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
-.stat-row{display:flex;gap:1rem;margin:.75rem 0}
-.stat{flex:1;text-align:center;padding:.5rem;background:var(--surface2);border-radius:var(--radius)}
-.stat .num{font-size:1.5rem;font-weight:300;font-family:var(--font-serif)}
+.stat-row{display:flex;gap:.75rem;margin:.5rem 0}
+.stat{flex:1;text-align:center;padding:.4rem .25rem;background:var(--surface2);border-radius:var(--radius)}
+.stat .num{font-size:1.3rem;font-weight:300;font-family:var(--font-serif)}
 .stat .num.up{color:var(--success)}
 .stat .num.down{color:var(--danger)}
-.stat .label{font-size:.65rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem}
-.day-check{display:flex;gap:3px;margin:.5rem 0;flex-wrap:wrap}
-.day-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all .2s}
-.day-dot.done{background:var(--accent)}
-.day-dot.today{background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent)}
-.day-dot.future{opacity:.3}
+.stat .label{font-size:.6rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em}
+.day-dots{display:flex;gap:2px;margin:.35rem 0;flex-wrap:wrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s}
+.dot.done{background:var(--accent)}
+.dot.today{background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent)}
+.dot.future{opacity:.25}
+.section-title{font-size:.65rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin:1rem 0 .5rem}
 
 /* Splash */
 .splash-overlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease}
@@ -65,18 +66,17 @@ textarea:focus{border-color:var(--accent-dim)}
 .splash-btn{background:transparent;border:1px solid var(--accent-dim);color:var(--accent);border-radius:var(--radius);padding:.75rem 2.5rem;font-size:1rem;cursor:pointer;transition:all .3s;opacity:0;animation:fadeSlide .8s ease 1.2s forwards;font-family:var(--font-serif);letter-spacing:.06em}
 .splash-btn:hover{background:var(--accent-dim);color:var(--ink);border-color:var(--accent)}
 .splash-btn:disabled{opacity:.3;cursor:not-allowed}
-
 @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes confetti{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(-200px) rotate(720deg);opacity:0}}
 @keyframes spinDial{0%{transform:rotate(0deg)}100%{transform:rotate(720deg)}}
-@keyframes celebrate{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
-/* Experiences */
-.exp-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.4rem;opacity:.7;cursor:pointer;transition:all .2s;animation:fadeSlide .4s ease}
+/* Modal overlay */
+.modal{position:fixed;inset:0;z-index:800;background:rgba(15,15,17,.95);display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeSlide .3s ease}
+.modal-inner{max-width:420px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;max-height:90vh;overflow-y:auto}
+.exp-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem .85rem;margin-bottom:.35rem;opacity:.7;cursor:pointer;transition:all .2s;animation:fadeSlide .4s ease}
 .exp-card:hover{opacity:1;border-color:var(--accent-dim)}
-.exp-card .id{font-family:var(--font-serif);font-size:.85rem;color:var(--ink-dim)}
-.exp-card .meta{font-size:.65rem;color:var(--ink-muted);margin-top:.15rem}
+.exp-card .id{font-family:var(--font-serif);font-size:.8rem;color:var(--ink-dim)}
+.exp-card .meta{font-size:.6rem;color:var(--ink-muted)}
 .celebration-overlay{position:fixed;inset:0;z-index:300;pointer-events:none;overflow:hidden}
 .celebration-piece{position:absolute;bottom:-10px;width:8px;height:8px;border-radius:2px;animation:confetti 2s ease-out forwards}
 .celebration-piece:nth-child(odd){background:var(--accent)}
@@ -92,18 +92,7 @@ textarea:focus{border-color:var(--accent-dim)}
       <div class="safe-glow" id="safeGlow"></div>
       <div class="safe-door" id="safeDoor">
         <div class="safe-dial" id="safeDial">
-          <div class="dial-mark" style="transform:rotate(0deg)"></div>
-          <div class="dial-mark" style="transform:rotate(30deg)"></div>
-          <div class="dial-mark" style="transform:rotate(60deg)"></div>
-          <div class="dial-mark" style="transform:rotate(90deg)"></div>
-          <div class="dial-mark" style="transform:rotate(120deg)"></div>
-          <div class="dial-mark" style="transform:rotate(150deg)"></div>
-          <div class="dial-mark" style="transform:rotate(180deg)"></div>
-          <div class="dial-mark" style="transform:rotate(210deg)"></div>
-          <div class="dial-mark" style="transform:rotate(240deg)"></div>
-          <div class="dial-mark" style="transform:rotate(270deg)"></div>
-          <div class="dial-mark" style="transform:rotate(300deg)"></div>
-          <div class="dial-mark" style="transform:rotate(330deg)"></div>
+          ${[0,30,60,90,120,150,180,210,240,270,300,330].map(d=>`<div class="dial-mark" style="transform:rotate(${d}deg)"></div>`).join('')}
           <div class="safe-dial-inner"></div>
         </div>
       </div>
@@ -114,197 +103,179 @@ textarea:focus{border-color:var(--accent-dim)}
 </div>
 <div class="container" id="app"></div>
 <script>
-const A='';const API=A+'/api';
-function req(p,o={}){return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json())}
-function e(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+const A='';
+function req(p,o={}){return fetch(A+'/api'+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json())}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
 async function load(){
-  const g=await req('/goal/current');
   const app=document.getElementById('app');
-  if(!g.active){
-    // Show experience + new goal form
-    const exps=await req('/goals/experiences');
+  const goals=await req('/goals');
+  const active=goals.filter(g=>g.status==='active'||!g.status);
+  const exps=await req('/goals/experiences');
+  
+  if(!active.length){
+    // Show creation form + experiences
     let ex='';
-    if(exps.length){ex=`<div style="margin-top:1.5rem;font-size:.65rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em">✦ Expériences</div>
-      ${exps.map(x=>`<div class="exp-card" onclick="showScore('${x.id}')"><div class="id">${e(x.identity||x.text)}</div><div class="meta">${x.avgScore}/100 · ${x.responseCount} réponses</div></div>`).join('')}`;}
+    if(exps.length)ex=`<div class="section-title">✦ Expériences</div>${exps.map(x=>`<div class="exp-card" onclick="showScore('${x.id}')"><div class="id">${esc(x.identity||x.text)}</div><div class="meta">${x.avgScore}/100</div></div>`).join('')}`;
     app.innerHTML=`<header><div><h1>miroir<span>.</span></h1><div class="sub">carnet d'engagements</div></div></header>
       <div class="card">
         <div style="font-size:.8rem;color:var(--ink-dim);margin-bottom:.25rem">Je choisis de...</div>
-        <input id="goalInput" placeholder="ex: méditer 10 minutes chaque matin" autocomplete="off" style="margin-bottom:.5rem"/>
-        <select id="durationSelect" style="font-size:.8rem;margin-bottom:.75rem">
-          <option value="7">7 jours — découverte</option>
-          <option value="14">14 jours — ancrage</option>
-          <option value="21">21 jours — habitude</option>
-          <option value="30" selected>30 jours — maîtrise</option>
-          <option value="60">60 jours — transformation</option>
+        <input id="gi" placeholder="ex: méditer 10 min chaque matin" autocomplete="off" style="margin-bottom:.5rem"/>
+        <select id="dur" style="font-size:.8rem;margin-bottom:.75rem">
+          <option value="7">7 jours · découverte</option>
+          <option value="14">14 jours · ancrage</option>
+          <option value="21">21 jours · habitude</option>
+          <option value="30" selected>30 jours · maîtrise</option>
+          <option value="60">60 jours · transformation</option>
         </select>
-        <button class="btn-primary" id="submitBtn" style="width:100%">commencer</button>
+        <button class="btn-primary" id="sb" style="width:100%">commencer</button>
       </div>
-      <div id="identityReveal" style="display:none">
-        <div class="card"><div class="original-text" id="revealOriginal"></div>
-          <div class="identity-text" id="revealIdentity"></div>
-          <div class="actions"><button class="btn-primary" id="confirmBtn">c'est juste</button>
-          <button class="btn-ghost" id="retryBtn">reformuler</button></div></div>
-      </div>
+      <div id="reveal" style="display:none"></div>
       ${ex}`;
-    document.getElementById('submitBtn').onclick=submitGoal;
-    document.getElementById('goalInput').onkeydown=e=>{if(e.key==='Enter')submitGoal()};
-    document.getElementById('goalInput').focus();
+    document.getElementById('sb').onclick=createGoal;
+    document.getElementById('gi').onkeydown=e=>{if(e.key==='Enter')createGoal()};
+    document.getElementById('gi').focus();
   } else {
-    showDashboard(g);
+    // Dashboard: up to 3 goals
+    const slots=[0,1,2];
+    let cards='';
+    active.forEach(g=>{
+      const createdAt=new Date(g.created_at);const now=new Date();
+      const dayIndex=Math.round((now-createdAt)/864e5)+1;
+      const totalDays=g.duration_days||30;const daysLeft=Math.max(0,totalDays-dayIndex+1);
+      const pct=Math.round((dayIndex/totalDays)*100);const dots=Array(totalDays).fill(0);
+      cards+=`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="flex:1">
+            <div class="original-text">${esc(g.text)}</div>
+            <div class="identity-text">${esc(g.identity)}</div>
+          </div>
+          <button class="btn-ghost" onclick="delGoal('${g.id}')" style="font-size:.8rem;opacity:.4">✕</button>
+        </div>
+        <div class="progress-bar"><div class="fill" style="width:${Math.min(100,pct)}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--ink-muted)">Jour ${dayIndex} · ${daysLeft} restants</div>
+        <div class="day-dots">${dots.map((_,i)=>{const c=i+1<dayIndex?'done':i+1===dayIndex?'today':'future';return`<div class="dot ${c}"></div>`}).join('')}</div>
+        <div id="goalStatus_${g.id}">${g.todayAnswered?`<span style="font-size:.8rem;color:var(--success)">✓ Check fait</span>`:`<button class="btn-primary" style="width:100%" onclick="checkGoal('${g.id}')">🌙 faire le check</button>`}</div>
+        <div class="actions" style="margin-top:.35rem">
+          <button class="btn" onclick="showScore('${g.id}')" style="font-size:.7rem;padding:.3rem .5rem">📊 évolution</button>
+          <button class="btn" onclick="interact('${g.id}')" style="font-size:.7rem;padding:.3rem .5rem">✓ c'est moi</button>
+        </div>
+      </div>`;
+    });
+    // Add button if < 3 goals
+    const addBtn=active.length<3?`<button class="btn" onclick="showCreate()" style="width:100%;text-align:center;padding:.75rem;border-style:dashed">+ Nouvel objectif</button>`:'';
+    let ex='';
+    if(exps.length)ex=`<div class="section-title">✦ Expériences</div>${exps.slice(0,3).map(x=>`<div class="exp-card" onclick="showScore('${x.id}')"><div class="id">${esc(x.identity||x.text)}</div><div class="meta">${x.avgScore}/100</div></div>`).join('')}`;
+    app.innerHTML=`<header><div><h1>miroir<span>.</span></h1><div class="sub">${active.length}/3 objectifs</div></div></header>${cards}${addBtn}${ex}`;
   }
 }
 
-async function submitGoal(){
-  const i=document.getElementById('goalInput'),t=i.value.trim();
-  if(t.length<3)return;
-  const d=document.getElementById('durationSelect').value;
-  document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='...';
+async function createGoal(){
+  const i=document.getElementById('gi'),t=i.value.trim();if(t.length<3)return;
+  const d=document.getElementById('dur').value;
+  document.getElementById('sb').disabled=true;document.getElementById('sb').textContent='...';
   const r=await req('/goals',{method:'POST',body:JSON.stringify({text:t,duration:d})});
-  document.getElementById('submitBtn').textContent='commencer';
-  document.getElementById('identityReveal').style.display='block';
-  document.getElementById('revealOriginal').textContent=r.text;
-  document.getElementById('revealIdentity').textContent=r.identity;
-  document.getElementById('confirmBtn').onclick=async()=>{document.getElementById('identityReveal').style.display='none';load();setTimeout(()=>autoQuestion(r.id),300)};
-  document.getElementById('retryBtn').onclick=async()=>{const x=await req('/goals/'+r.id+'/reframe',{method:'POST'});if(x.identity){document.getElementById('revealIdentity').textContent=x.identity}};
-  document.getElementById('submitBtn').disabled=false;i.value='';
+  if(r.error){alert(r.error);document.getElementById('sb').disabled=false;document.getElementById('sb').textContent='commencer';return}
+  document.getElementById('sb').textContent='commencer';
+  document.getElementById('reveal').style.display='block';
+  document.getElementById('reveal').innerHTML=`<div class="card"><div class="original-text">${esc(r.text)}</div><div class="identity-text">${esc(r.identity)}</div><div class="actions"><button class="btn-primary" id="cfBtn">c'est juste</button><button class="btn-ghost" id="refBtn">reformuler</button></div></div>`;
+  document.getElementById('cfBtn').onclick=()=>{document.getElementById('reveal').style.display='none';load();setTimeout(()=>checkGoal(r.id),400)};
+  document.getElementById('refBtn').onclick=async()=>{const x=await req('/goals/'+r.id+'/reframe',{method:'POST'});if(x.identity)document.getElementById('reveal').querySelector('.identity-text').textContent=x.identity};
+  document.getElementById('sb').disabled=false;i.value='';
 }
 
-function showDashboard(g){
-  const app=document.getElementById('app');
-  const pct=Math.round((g.dayIndex/g.totalDays)*100);
-  const days=new Array(g.totalDays).fill(0).map((_,i)=>i+1);
-  const todayScore=g.todayScore?.score;
-  const yesterdayVal=g.yesterdayScore?.score;
-  const diff=yesterdayVal!==null&&todayScore!==null?todayScore-yesterdayVal:null;
-  const avgScore=g.allScores.length?Math.round(g.allScores.reduce((s,x)=>s+x.score,0)/g.allScores.length):0;
-  
-  let body='';
-  if(!g.todayAnswered){
-    body=`<div class="card"><div style="font-family:var(--font-serif);color:var(--accent);font-size:.9rem;margin-bottom:.5rem">🌙 Check du soir disponible</div>
-      <p style="font-size:.8rem;color:var(--ink-dim);margin-bottom:.5rem">${g.dayIndex===1?'Premier jour ! Lance-toi et réponds à quelques questions personnalisées.':'Fais le bilan de ta journée, je te donnerai un score et ta progression.'}</p>
-      <button class="btn-primary" onclick="autoQuestion('${g.id}')">${g.dayIndex===1?'commencer le check →':'faire le bilan →'}</button></div>`;
-  } else {
-    body=`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-family:var(--font-serif);font-size:.9rem;color:var(--success)">✓ Check fait</span>
-        <span style="font-size:1.8rem;font-family:var(--font-serif);color:${todayScore<40?'var(--danger)':todayScore<65?'#b8863a':'var(--success)'}">${todayScore}</span>
-      </div>
-      <div style="font-size:.75rem;color:var(--ink-muted)">Score du jour ${diff!==null?`· ${diff>=0?'↑':'↓'} ${Math.abs(diff)} vs hier`:''}</div>
-      <div class="actions"><button class="btn" onclick="showScore('${g.id}')">📊 Voir l'évolution</button>
-      <button class="btn" onclick="autoQuestion('${g.id}')">🌙 Refaire le check</button></div>
-    </div>`;
-  }
-  
-  app.innerHTML=`<header><div><h1>miroir<span>.</span></h1><div class="sub">carnet d'engagements</div></div>
-    <button class="btn" onclick="showScore('${g.id}')" style="padding:.3rem .5rem;font-size:.65rem">📊</button></header>
-    <div class="card">
-      <div class="original-text">${e(g.text)}</div>
-      <div class="identity-text">${e(g.identity)}</div>
-      <div class="progress-bar"><div class="fill" style="width:${Math.min(100,pct)}%"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--ink-muted)">
-        <span>Jour ${g.dayIndex}</span><span>${g.daysLeft} jours restants</span>
-      </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat"><div class="num">${g.dayIndex}</div><div class="label">Jour</div></div>
-      <div class="stat"><div class="num ${diff!==null?(diff>=0?'up':'down'):''}">${todayScore||'—'}</div><div class="label">Aujourd'hui</div></div>
-      <div class="stat"><div class="num ${diff!==null?(diff>=0?'up':'down'):''}">${diff!==null?(diff>=0?'+'+diff:diff):'—'}</div><div class="label">vs Hier</div></div>
-      <div class="stat"><div class="num">${avgScore||'—'}</div><div class="label">Moyenne</div></div>
-    </div>
-    <div class="day-check">${days.map((_,i)=>{const cls=i+1<g.dayIndex?'done':i+1===g.dayIndex?'today':'future';return`<div class="day-dot ${cls}" title="Jour ${i+1}"></div>`}).join('')}</div>
-    ${body}`;
+function showCreate(){document.getElementById('app').insertAdjacentHTML('afterbegin',`<div class="card" id="quickForm"><input id="qgi" placeholder="ex: lire 20 pages par jour" autocomplete="off" style="margin-bottom:.35rem"/><select id="qdr" style="font-size:.8rem;width:100%;margin-bottom:.5rem"><option value="7">7j</option><option value="14">14j</option><option value="21">21j</option><option value="30" selected>30j</option><option value="60">60j</option></select><button class="btn-primary" style="width:100%" id="qsb">ajouter</button></div>`);
+  document.getElementById('qgi').focus();
+  document.getElementById('qsb').onclick=async()=>{
+    const t=document.getElementById('qgi').value.trim();if(t.length<3)return;
+    const d=document.getElementById('qdr').value;
+    const r=await req('/goals',{method:'POST',body:JSON.stringify({text:t,duration:d})});
+    if(r.error){alert(r.error);return}
+    document.getElementById('quickForm').remove();load();
+    setTimeout(()=>checkGoal(r.id),400);
+  };
+  document.getElementById('qgi').onkeydown=e=>{if(e.key==='Enter')document.getElementById('qsb').click()};
 }
 
-// ═══ Auto questioning ═══
-async function autoQuestion(goalId){
-  const modal=document.createElement('div');modal.className='splash-overlay';modal.style.background='rgba(15,15,17,.95)';modal.style.zIndex='800';
-  modal.innerHTML=`<div style="max-width:420px;width:90%" id="qbody"></div>`;
-  document.body.appendChild(modal);
-  const m=document.getElementById('qbody');
-  const conv=[];let depth=0;const MAX_Q=5;
-  
-  m.innerHTML=`<div style="text-align:center;padding:1.5rem 0">
-    <div style="font-size:2rem;margin-bottom:.5rem">🎯</div>
-    <h3 style="font-family:var(--font-serif)">Explorons ensemble</h3>
-    <p style="font-size:.85rem;color:var(--ink-dim);margin:.75rem 0;line-height:1.6">Je vais te poser ${MAX_Q} questions personnalisées. Chaque réponse m'aide à mieux comprendre où tu en es.</p>
-    <button class="btn-primary" id="qstart">commencer →</button>
-  </div>`;
-  document.getElementById('qstart').onclick=ask;
+async function delGoal(id){if(confirm('Supprimer cet objectif ?')){await req('/goals/'+id,{method:'DELETE'});load()}}
+
+// ═══ Question flow ═══
+async function checkGoal(id){
+  const modal=document.createElement('div');modal.className='modal';
+  modal.innerHTML=`<div class="modal-inner" id="qm"></div>`;
+  document.body.appendChild(modal);const m=document.getElementById('qm');
+  const conv=[];let depth=0;const MAX=5;
+  m.innerHTML=`<div style="text-align:center;padding:.5rem 0"><div style="font-size:1.5rem;margin-bottom:.5rem">🎯</div><h3 style="font-family:var(--font-serif);font-size:1rem">Check personnalisé</h3><p style="font-size:.8rem;color:var(--ink-dim);margin:.5rem 0">${MAX} questions · chaque réponse adapte la suivante</p><button class="btn-primary" id="qs">commencer</button></div>`;
+  document.getElementById('qs').onclick=ask;
   modal.onclick=e=>{if(e.target===modal)modal.remove()};
   
   async function ask(){
-    if(depth>=MAX_Q){
-      g=`<div style="text-align:center;padding:1rem">
-        <h3 style="font-family:var(--font-serif)">✅ Session terminée</h3>
-        <p style="font-size:.85rem;color:var(--ink-dim);margin:.5rem 0 1rem">Je calcule ton score...</p>
-        <button class="btn-primary" id="qscore">📊 voir mon score</button>
-        <button class="btn-ghost" id="qclose">fermer</button>
-      </div>`;
-      m.innerHTML=g;
-      document.getElementById('qscore').onclick=()=>showScore(goalId);
-      document.getElementById('qclose').onclick=()=>modal.remove();
+    if(depth>=MAX){
+      m.innerHTML=`<div style="text-align:center"><div style="font-size:1.5rem;margin-bottom:.5rem">✅</div><p style="font-size:.85rem;color:var(--ink-dim);margin:.5rem 0">Session terminée</p><button class="btn-primary" id="qsc">📊 voir mon score</button><button class="btn-ghost" onclick="document.getElementById('${modal.id}')?.remove()">fermer</button></div>`;
+      document.getElementById('qsc').onclick=()=>{modal.remove();showScore(id)};
       return;
     }
-    m.innerHTML=`<div style="text-align:center;padding:1rem"><span style="font-size:.85rem;color:var(--ink-muted);font-style:italic">réflexion...</span></div>`;
-    await new Promise(r=>setTimeout(r,600+Math.random()*400));
-    
-    const q=await req('/goals/'+goalId+'/next-question',{method:'POST',body:JSON.stringify({conversation:conv})});
-    m.innerHTML=`<div style="margin-bottom:.5rem;font-size:.7rem;color:var(--ink-muted)">Question ${depth+1}/${MAX_Q}</div>
-      <div style="font-size:.9rem;color:var(--ink);line-height:1.5;margin-bottom:.75rem">${e(q.question||'Comment te sens-tu aujourd\'hui ?')}</div>
-      <textarea id="qans" rows="2" placeholder="Ta réponse..." style="margin-bottom:.5rem"></textarea>
-      <div class="actions"><button class="btn-primary" id="qnext">suivant →</button></div>`;
-    const ta=document.getElementById('qans');ta.focus();
-    ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('qnext')?.click()}};
-    document.getElementById('qnext').onclick=async()=>{
+    m.innerHTML=`<div style="text-align:center;padding:1rem"><span style="font-size:.8rem;color:var(--ink-muted);font-style:italic">réflexion...</span></div>`;
+    await new Promise(r=>setTimeout(r,500+Math.random()*400));
+    const q=await req('/goals/'+id+'/next-question',{method:'POST',body:JSON.stringify({conversation:conv})});
+    m.innerHTML=`<div style="margin-bottom:.25rem;font-size:.65rem;color:var(--ink-muted)">${depth+1}/${MAX}</div>
+      <div style="font-size:.85rem;color:var(--ink);line-height:1.5;margin-bottom:.5rem">${esc(q.question||'Comment te sens-tu ?')}</div>
+      <textarea id="qa" rows="2" placeholder="Ta réponse..."></textarea>
+      <div class="actions"><button class="btn-primary" id="qn">suivant →</button></div>`;
+    const ta=document.getElementById('qa');ta.focus();
+    ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('qn')?.click()}};
+    document.getElementById('qn').onclick=async()=>{
       const txt=ta.value.trim()||'(passé)';
-      await req('/goals/'+goalId+'/respond',{method:'POST',body:JSON.stringify({questionId:'checkin',response:txt})});
-      conv.push({q:q.question,a:txt});
-      depth++;ask();
+      await req('/goals/'+id+'/respond',{method:'POST',body:JSON.stringify({questionId:'checkin',response:txt})});
+      conv.push({q:q.question,a:txt});depth++;ask();
     };
   }
 }
 
-// ═══ Score display ═══
-async function showScore(goalId){
-  const r=await req('/goals/'+goalId+'/score',{method:'POST'});
-  const scores=await req('/goals/'+goalId+'/scores');
-  const modal=document.createElement('div');modal.className='splash-overlay';modal.style.background='rgba(15,15,17,.95)';modal.style.zIndex='800';
-  const maxScore=Math.max(...scores.map(s=>s.score),100);
-  const svgW=320,svgH=140,pad=30,cw=svgW-pad*2,ch=svgH-pad-10;
+async function interact(id){
+  const r=await req('/goals/'+id+'/interact',{method:'POST'});
+  if(r.reinforcement)showToast(r.reinforcement);
+  load();
+}
+
+// ═══ Score ═══
+async function showScore(id){
+  const r=await req('/goals/'+id+'/score',{method:'POST'});
+  const scores=await req('/goals/'+id+'/scores');
+  const maxS=Math.max(...scores.map(s=>s.score),100);
+  const sw=320,sh=140,pad=30,cw=sw-pad*2,ch=sh-pad-10;
   let bars='',pts='';
   if(scores.length>1){
     scores.forEach((s,i)=>{
-      const bw=Math.max(6,Math.min(20,cw/scores.length-2));const x=pad+i*(cw/(scores.length-1))-bw/2;const h=Math.max(2,(s.score/maxScore)*ch);const y=svgH-pad-h;
+      const bw=Math.max(6,Math.min(18,cw/scores.length-2));const x=pad+i*(cw/(scores.length-1))-bw/2;const h=Math.max(2,(s.score/maxS)*ch);const y=sh-pad-h;
       const col=s.score<40?'#8a4a3e':s.score<65?'#b8863a':'#5a7a4e';
-      bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${col}" opacity=".9"><animate attributeName="height" from="0" to="${h}" dur=".6s" fill="freeze"/><animate attributeName="y" from="${svgH-pad}" to="${y}" dur=".6s" fill="freeze"/></rect>
+      bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${col}" opacity=".9"><animate attributeName="height" from="0" to="${h}" dur=".6s" fill="freeze"/><animate attributeName="y" from="${sh-pad}" to="${y}" dur=".6s" fill="freeze"/></rect>
       <text x="${x+bw/2}" y="${y-4}" font-size="8" fill="${col}" text-anchor="middle">${s.score}</text>
-      <text x="${x+bw/2}" y="${svgH-pad+12}" font-size="7" fill="#49473f" text-anchor="middle">${s.session_date.slice(5)}</text>`;
+      <text x="${x+bw/2}" y="${sh-pad+12}" font-size="7" fill="#49473f" text-anchor="middle">${s.session_date.slice(5)}</text>`;
     });
-    pts=`<polyline points="${scores.map((s,i)=>`${pad+i*(cw/(scores.length-1))},${svgH-pad-(s.score/maxScore)*ch}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,2" opacity=".5"/>`;
+    pts=`<polyline points="${scores.map((s,i)=>`${pad+i*(cw/(scores.length-1))},${sh-pad-(s.score/maxS)*ch}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,2" opacity=".5"/>`;
   }
-  const prevScore=r.previousScore;const diff=prevScore!==null?r.score-prevScore:null;
-  const g=await req('/goal/current');
-  modal.innerHTML=`<div style="max-width:420px;width:90%;padding:.5rem 0" id="qbody">
-    <div style="text-align:center">
-      <div style="display:flex;align-items:baseline;justify-content:center;gap:.5rem;margin:.5rem 0">
-        <span style="font-size:2.5rem;font-family:var(--font-serif);color:${r.score<40?'var(--danger)':r.score<65?'#b8863a':'var(--success)'}">${r.score}</span>
-        <span style="font-size:.9rem;color:var(--ink-muted)">/100</span>
-        ${diff!==null?`<span style="font-size:.85rem;color:${diff>=0?'var(--success)':'var(--danger)'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)}</span>`:''}
-      </div>
-      <p style="font-size:.8rem;color:var(--ink-dim);font-style:italic;margin-bottom:.75rem">${e(r.feedback)}</p>
-      ${scores.length>1?`<svg width="${svgW}" height="${svgH+18}" viewBox="0 0 ${svgW} ${svgH+18}" style="display:block;margin:0 auto;max-width:100%"><line x1="${pad}" y1="${svgH-pad}" x2="${svgW-pad}" y2="${svgH-pad}" stroke="#2a2826" stroke-width="1"/><line x1="${pad}" y1="${pad}" x2="${pad}" y2="${svgH-pad}" stroke="#2a2826" stroke-width="1"/>${bars}${pts}</svg>`:'<p style="font-size:.7rem;color:var(--ink-muted);text-align:center">Plusieurs jours de données nécessaires pour le graphique</p>'}
-      <div class="actions" style="justify-content:center;margin-top:.75rem">
-        <button class="btn-primary" id="closeScore">retour</button>
-        <button class="btn" onclick="this.closest('[style*=\"z-index:800\"]').remove();autoQuestion('${goalId}')">🌙 refaire le check</button>
-      </div>
+  const prev=r.previousScore;const diff=prev!==null?r.score-prev:null;
+  const modal=document.createElement('div');modal.className='modal';
+  modal.innerHTML=`<div class="modal-inner"><div style="text-align:center">
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:.5rem;margin:.5rem 0">
+      <span style="font-size:2.2rem;font-family:var(--font-serif);color:${r.score<40?'var(--danger)':r.score<65?'#b8863a':'var(--success)'}">${r.score}</span>
+      <span style="font-size:.8rem;color:var(--ink-muted)">/100</span>
+      ${diff!==null?`<span style="font-size:.8rem;color:${diff>=0?'var(--success)':'var(--danger)'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)}</span>`:''}
     </div>
-  </div>`;
+    <p style="font-size:.75rem;color:var(--ink-dim);font-style:italic;margin-bottom:.75rem">${esc(r.feedback)}</p>
+    ${scores.length>1?`<svg width="${sw}" height="${sh+18}" viewBox="0 0 ${sw} ${sh+18}" style="display:block;margin:0 auto;max-width:100%"><line x1="${pad}" y1="${sh-pad}" x2="${sw-pad}" y2="${sh-pad}" stroke="#2a2826" stroke-width="1"/><line x1="${pad}" y1="${pad}" x2="${pad}" y2="${sh-pad}" stroke="#2a2826" stroke-width="1"/>${bars}${pts}</svg>`:'<p style="font-size:.65rem;color:var(--ink-muted)">Plusieurs jours pour le graphique</p>'}
+    <div class="actions" style="justify-content:center;margin-top:.75rem">
+      <button class="btn-primary" onclick="modal.remove();load()">retour</button>
+      <button class="btn" onclick="modal.remove();checkGoal('${id}')">🌙 refaire le check</button>
+    </div>
+  </div></div>`;
   document.body.appendChild(modal);
-  document.getElementById('closeScore').onclick=()=>modal.remove();
   modal.onclick=e=>{if(e.target===modal)modal.remove()};
 }
 
-// ═══ Init ═══
+function showToast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:.5rem 1rem;border-radius:var(--radius);font-size:.8rem;z-index:900;animation:fadeSlide .3s ease';document.body.appendChild(d);setTimeout(()=>d.remove(),3000)}
+
 setTimeout(load,300);
 </script>
 </body>
