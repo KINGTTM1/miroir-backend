@@ -432,3 +432,6 @@ app.post('/api/goals/:id/reframe', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log('miroir → http://localhost:'+PORT));
+
+// Health check pour Railway
+app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
