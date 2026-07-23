@@ -29,12 +29,13 @@ async function init() {
   db.run('PRAGMA foreign_keys = ON');
   try { db.run('ALTER TABLE goals ADD COLUMN status TEXT DEFAULT \'active\''); } catch(e) {}
   try { db.run('ALTER TABLE goals ADD COLUMN completed_at TEXT'); } catch(e) {}
+  try { db.run('ALTER TABLE goals ADD COLUMN duration_days INTEGER DEFAULT 30'); } catch(e) {}
   db.exec(`
     CREATE TABLE IF NOT EXISTS goals (
       id TEXT PRIMARY KEY, text TEXT NOT NULL, identity TEXT NOT NULL,
       created_at TEXT NOT NULL, last_interaction TEXT,
       interaction_count INTEGER DEFAULT 0, interventions_dismissed_until TEXT,
-      status TEXT DEFAULT 'active', completed_at TEXT
+      status TEXT DEFAULT 'active', completed_at TEXT, duration_days INTEGER DEFAULT 30
     );
     CREATE TABLE IF NOT EXISTS interactions (
       id TEXT PRIMARY KEY, goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
@@ -158,17 +159,25 @@ app.get('/api/goals', async (req, res) => {
 
 // ═══ POST /api/goals ═══
 app.post('/api/goals', async (req, res) => {
-  const { text } = req.body;
+  const { text, duration } = req.body;
+  const dur = parseInt(duration) || 30;
   if (!text || text.trim().length < 3) return res.status(400).json({error:'Texte trop court'});
+  
+  // Auto-complete any existing active goal
+  const existing = dbGet("SELECT * FROM goals WHERE status='active' OR status IS NULL");
+  if (existing) {
+    dbRun("UPDATE goals SET status='completed', completed_at=? WHERE id=?", [new Date().toISOString(), existing.id]);
+  }
+  
   const id = randomUUID(), now = new Date().toISOString();
   let identity = `Je suis quelqu'un qui ${text.toLowerCase().replace(/^(.*?)(?: (?:chaque|tous les|par|le|la|les|du|de la|des))?.*$/, '$1')}.`;
   if (llmEnabled) {
     const raw = await callLLM(`Transforme cet objectif comportemental en UNE phrase d'identité au présent, courte, incarnée, à la première personne. L'action concrète et la fréquence doivent apparaître. Objectif: "${text}".`);
     if (raw && raw.length > 10) identity = raw;
   }
-  dbRun('INSERT INTO goals (id,text,identity,created_at,interaction_count) VALUES (?,?,?,?,0)', [id, text.trim(), identity, now]);
+  dbRun('INSERT INTO goals (id,text,identity,created_at,interaction_count,duration_days) VALUES (?,?,?,?,0,?)', [id, text.trim(), identity, now, dur]);
   dbSave();
-  res.json({id, text:text.trim(), identity});
+  res.json({id, text:text.trim(), identity, durationDays: dur});
 });
 
 // ═══ ORGANIZED ═══
@@ -429,6 +438,34 @@ app.post('/api/goals/:id/reframe', async (req, res) => {
   dbRun('UPDATE goals SET identity=? WHERE id=?', [identity, g.id]);
   dbSave();
   res.json({identity});
+});
+
+// ═══ Current single goal ═══
+app.get('/api/goal/current', (req, res) => {
+  const g = dbGet("SELECT * FROM goals WHERE status='active' OR status IS NULL");
+  if (!g) return res.json({ active: false });
+  const today = new Date().toISOString().slice(0,10);
+  const createdAt = new Date(g.created_at);
+  const now = new Date();
+  const dayIndex = Math.round((now - createdAt) / 864e5) + 1;
+  const totalDays = g.duration_days || 30;
+  const daysLeft = Math.max(0, totalDays - dayIndex + 1);
+  const isComplete = daysLeft <= 0;
+  if (isComplete) {
+    dbRun("UPDATE goals SET status='completed', completed_at=? WHERE id=?", [now.toISOString(), g.id]);
+    dbSave();
+  }
+  const todayAnswered = dbGet("SELECT COUNT(*) as c FROM daily_responses WHERE goal_id=? AND session_date=?", [g.id, today])?.c || 0;
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayScore = dbGet("SELECT * FROM daily_scores WHERE goal_id=? AND session_date=?", [g.id, yesterday.toISOString().slice(0,10)]);
+  const allScores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  res.json({
+    active: !isComplete, id: g.id, text: g.text, identity: g.identity,
+    createdAt: g.created_at, durationDays: totalDays,
+    dayIndex, daysLeft, totalDays,
+    todayAnswered, yesterdayScore: yesterdayScore || null,
+    allScores, interactions: g.interaction_count || 0
+  });
 });
 
 app.listen(PORT, () => console.log('miroir → http://localhost:'+PORT));
