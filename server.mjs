@@ -467,6 +467,36 @@ app.get('/api/goal/current', (req, res) => {
   });
 });
 
+// ═══ Analysis endpoint ═══
+app.post('/api/goals/:id/analyze', async (req, res) => {
+  const g = dbGet('SELECT * FROM goals WHERE id=?', [req.params.id]);
+  if (!g) return res.status(404).json({error:'Introuvable'});
+  const today = new Date().toISOString().slice(0,10);
+  const responses = dbAll("SELECT * FROM daily_responses WHERE goal_id=? AND session_date=?", [g.id, today]);
+  const scores = dbAll('SELECT * FROM daily_scores WHERE goal_id=? ORDER BY session_date ASC', [g.id]);
+  const todayScore = scores.length > 0 ? scores[scores.length-1].score : 50;
+  const prev = scores.length >= 2 ? scores[scores.length-2].score : null;
+  const diff = prev !== null ? todayScore - prev : null;
+  const daysActive = Math.round((Date.now() - new Date(g.created_at).getTime()) / 864e5) + 1;
+  
+  let analysis = '';
+  if (llmEnabled && responses.length > 0) {
+    const answers = responses.map(r => `Q: ${r.question_id || '?'}\nR: ${r.response}`).join('\n');
+    const raw = await callLLM(`Analyse personnalisée pour l'objectif "${g.text}" (identité: "${g.identity}").
+Jour ${daysActive}/${g.duration_days || 30}. Score aujourd'hui: ${todayScore}/100. Évolution: ${diff !== null ? (diff >= 0 ? '+'+diff : diff) : 'premier score'}.
+Réponses d'aujourd'hui:
+${answers}
+
+Génère UN paragraphe court (2-3 phrases) d'analyse sincère et personnalisée : ce que ça révèle, un point positif, un axe d'amélioration. Sois humain, pas robotique.`);
+    if (raw) analysis = raw;
+  }
+  if (!analysis) {
+    analysis = `${todayScore >= 70 ? 'Bonne journée. La régularité porte ses fruits.' : todayScore >= 50 ? 'Journée correcte. Des hauts et des bas, c\'est normal.' : 'Journée difficile. L\'important est d\'être conscient de où tu en es.'} ${diff !== null ? (diff >= 0 ? 'Progression par rapport à hier.' : 'Léger recul par rapport à hier.') : ''}`;
+  }
+  
+  res.json({score: todayScore, previousScore: prev, diff, analysis, daysActive, responses: responses.length});
+});
+
 app.listen(PORT, () => console.log('miroir → http://localhost:'+PORT));
 
 // Health check pour Railway
